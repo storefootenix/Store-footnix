@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Product, PRODUCTS } from '../data/products';
+import { Product } from '../data/products';
 import { ProductVisual } from './ProductVisual';
 import { Search, X, ArrowRight, Tag } from 'lucide-react';
 
@@ -14,7 +14,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   isOpen,
   onClose,
   onSelectProduct,
-  products = PRODUCTS,
+  products = [],
 }) => {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -64,7 +64,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search cards, packs, posters, stickers..."
-              className="w-full text-base sm:text-base text-neutral-900 placeholder-neutral-400 focus:outline-none py-1"
+              className="w-full text-base sm:text-base text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#245bff]/20 py-2 px-3 bg-neutral-100 border border-neutral-200 rounded-lg transition-all"
             />
             {query && (
               <button
@@ -141,7 +141,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-14 bg-neutral-100 rounded overflow-hidden shrink-0">
-                      <ProductVisual type={product.imageType} className="scale-90" />
+                      <ProductVisual type={product.imageType} imageUrl={product.imageUrl} className="scale-90" />
                     </div>
                     <div>
                       <h4 className="text-xs sm:text-sm font-medium text-neutral-900 group-hover:text-[#245bff] transition-colors">

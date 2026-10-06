@@ -31,10 +31,11 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
   selectedOrder: externalSelectedOrder,
   onClearSelectedOrder,
 }) => {
-  const [statusFilter, setStatusFilter] = useState<'all' | Order['status']>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | Order['status'] | 'cod'>('all');
   const [search, setSearch] = useState('');
   const [internalSelectedOrder, setInternalSelectedOrder] = useState<Order | null>(null);
   const [trackingInput, setTrackingInput] = useState('');
+  const [trackingMode, setTrackingMode] = useState<'auto' | 'manual'>('auto');
 
   const activeOrder = externalSelectedOrder || internalSelectedOrder;
 
@@ -46,12 +47,16 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
   const handleSelectOrder = (order: Order) => {
     setInternalSelectedOrder(order);
     setTrackingInput(order.trackingNumber || '');
+    setTrackingMode(order.trackingNumber ? 'manual' : 'auto');
   };
 
   // Filter orders
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'cod' ? o.paymentMethod === 'cod' : o.status === statusFilter);
+      
       const matchesSearch =
         search === '' ||
         o.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -70,6 +75,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
     shipped: orders.filter((o) => o.status === 'shipped').length,
     delivered: orders.filter((o) => o.status === 'delivered').length,
     cancelled: orders.filter((o) => o.status === 'cancelled').length,
+    cod: orders.filter((o) => o.paymentMethod === 'cod').length,
   };
 
   return (
@@ -108,7 +114,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
 
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto text-xs pb-1 md:pb-0 scrollbar-none">
-          {(['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map(
+          {(['all', 'cod', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map(
             (status) => (
               <button
                 key={status}
@@ -119,7 +125,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                 }`}
               >
-                {status} ({statusCounts[status]})
+                {status === 'cod' ? 'COD Only' : status} ({statusCounts[status]})
               </button>
             )
           )}
@@ -195,7 +201,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
                         {order.items.reduce((s, i) => s + i.quantity, 0)} items ({order.items.length} SKUs)
                       </td>
                       <td className="py-3 px-4 uppercase text-[10px] font-mono text-neutral-500">
-                        {order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Instant UPI'}
+                        {order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod === 'razorpay' ? 'Razorpay Secure' : 'Online Payment'}
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-neutral-900">
                         Rs. {order.total.toFixed(2)}
@@ -340,28 +346,83 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
                         </p>
                       </div>
                     </div>
-                    {/* Tracking */}
-                    <div className="pt-2 border-t border-neutral-200/80">
-                      <span className="text-[10px] text-neutral-500 uppercase block mb-1">
-                        Courier Tracking ID
-                      </span>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={trackingInput}
-                          onChange={(e) => setTrackingInput(e.target.value)}
-                          placeholder="e.g. DTDC-9021482"
-                          className="flex-1 px-2 py-1 bg-white border border-neutral-300 rounded text-xs font-mono"
-                        />
-                        <button
-                          onClick={() =>
-                            onUpdateOrderStatus(activeOrder.id, activeOrder.status, trackingInput)
-                          }
-                          className="px-2 py-1 text-xs bg-neutral-900 text-white rounded font-medium"
-                        >
-                          Save
-                        </button>
+                    {/* Tracking & Logistics */}
+                    <div className="pt-3 border-t border-neutral-200/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase font-bold text-neutral-500">
+                          Fulfillment Method
+                        </span>
+                        <div className="flex items-center gap-1 bg-neutral-200/50 p-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                          <button
+                            onClick={() => setTrackingMode('auto')}
+                            className={`px-2 py-1 rounded transition-colors ${trackingMode === 'auto' ? 'bg-white shadow-xs text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'}`}
+                          >
+                            Auto
+                          </button>
+                          <button
+                            onClick={() => setTrackingMode('manual')}
+                            className={`px-2 py-1 rounded transition-colors ${trackingMode === 'manual' ? 'bg-white shadow-xs text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'}`}
+                          >
+                            Manual
+                          </button>
+                        </div>
                       </div>
+
+                      {trackingMode === 'auto' ? (
+                        <div className="space-y-2 p-2.5 bg-rose-50/50 border border-rose-100 rounded">
+                          <p className="text-[10px] text-neutral-500 leading-tight">
+                            Generate a tracking number automatically via Delhivery. Status will change to <strong>Shipped</strong>.
+                          </p>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch('/api/shipping/create-shipment', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ orderId: activeOrder.id })
+                                });
+                                const data = await res.json();
+                                if (data.success && data.awb) {
+                                  setTrackingInput(data.awb);
+                                  onUpdateOrderStatus(activeOrder.id, 'shipped', data.awb);
+                                  alert(`Delhivery Shipment Created! AWB: ${data.awb}`);
+                                } else {
+                                  alert('Failed to create Delhivery shipment.');
+                                }
+                              } catch(err) {
+                                alert('Network error communicating with shipping API.');
+                              }
+                            }}
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 rounded transition-colors cursor-pointer"
+                          >
+                            <Truck className="w-3.5 h-3.5" />
+                            <span>Generate Delhivery AWB</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 p-2.5 bg-neutral-100 rounded border border-neutral-200">
+                           <p className="text-[10px] text-neutral-500 leading-tight">
+                            Manually enter a tracking ID from a third-party courier (e.g. BlueDart, India Post).
+                          </p>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={trackingInput}
+                              onChange={(e) => setTrackingInput(e.target.value)}
+                              placeholder="e.g. AWB-9021482"
+                              className="flex-1 px-2 py-1.5 bg-white border border-neutral-300 rounded text-xs font-mono focus:outline-none focus:border-neutral-500"
+                            />
+                            <button
+                              onClick={() =>
+                                onUpdateOrderStatus(activeOrder.id, activeOrder.status, trackingInput)
+                              }
+                              className="px-3 py-1.5 text-xs bg-neutral-900 text-white rounded font-medium shrink-0 hover:bg-black transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

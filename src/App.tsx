@@ -17,27 +17,52 @@ import { ContactModal } from './components/ContactModal';
 import { CatalogView } from './components/CatalogView';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { Product, PRODUCTS } from './data/products';
-import { Order, INITIAL_ORDERS } from './data/orders';
-import { StoreBannerConfig, INITIAL_STORE_CONFIG } from './data/storeConfig';
+import { AdminLogin } from './components/admin/AdminLogin';
+import { UserDashboard } from './components/UserDashboard';
+import { LegalPages } from './components/LegalPages';
+import { Product } from './data/products';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from './lib/supabase';
+import { Order } from './data/orders';
+import { StoreBannerConfig } from './data/storeConfig';
 import { Check, ArrowUp } from 'lucide-react';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'store' | 'admin'>('store');
-  const [activeTab, setActiveTab] = useState<'home' | 'catalog' | 'contact'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'catalog' | 'contact' | 'account' | 'legal'>('home');
+  const [legalTab, setLegalTab] = useState<'privacy' | 'terms' | 'refund' | 'shipping'>('privacy');
   const [catalogFilter, setCatalogFilter] = useState<string>('all');
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [adminToken, setAdminToken] = useState<string | null>(localStorage.getItem('footenixAdminToken'));
   
   // Live Store State
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [bannerConfig, setBannerConfig] = useState<StoreBannerConfig>(INITIAL_STORE_CONFIG);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [bannerConfig, setBannerConfig] = useState<StoreBannerConfig>({
+    heroBannerUrl: '',
+    paniniBannerUrl: '',
+    stickersBannerUrl: '',
+    postersBannerUrl: '',
+    showPaniniBanner: false,
+    showStickersBanner: false,
+    showPostersBanner: false,
+    announcementText: '',
+    freeShippingThreshold: 0,
+    freeGiftThreshold: 0,
+    codEnabled: false,
+    supportPhone: '',
+    supportEmail: '',
+    storeName: 'Footenix Store',
+    storeDescription: 'RARE CARDS AND PREMIUM QUALITY. Welcome to the ultimate destination for football card collectors. Authentic trading cards, graded rookies, limited editions, and archival wall posters.',
+    instagramUrl: '',
+    facebookUrl: '',
+    twitterUrl: '',
+    activePromoCode: 'FIRST5',
+    activePromoDiscountType: 'percentage',
+    activePromoDiscountValue: 5
+  });
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    // Initial sample items matching store
-    { product: PRODUCTS[0], quantity: 1 }, // Glue dots
-    { product: PRODUCTS[6], quantity: 2 }, // Messi sticker
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
@@ -45,7 +70,58 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set());
+  const [session, setSession] = useState<Session | null>(null);
 
+  // Supabase Auth Listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      if (event === 'SIGNED_IN') {
+        setToastMessage(`Welcome back, ${session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Collector'}!`);
+        setTimeout(() => setToastMessage(null), 2500);
+      } else if (event === 'SIGNED_OUT') {
+        setToastMessage('You have been securely signed out.');
+        setTimeout(() => setToastMessage(null), 2500);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch initial data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [prodRes, ordersRes, configRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/orders'),
+          fetch('/api/config')
+        ]);
+        
+        if (prodRes.ok) {
+          const data = await prodRes.json();
+          if (data && data.length > 0) setProducts(data);
+        }
+        if (ordersRes.ok) {
+          const data = await ordersRes.json();
+          if (data && data.length > 0) setOrders(data);
+        }
+        if (configRes.ok) {
+          const data = await configRes.json();
+          if (data && data.heroBannerUrl) setBannerConfig(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch store data', err);
+      }
+    };
+    fetchData();
+  }, []);
   // Listen to scroll for mobile & desktop back-to-top button
   useEffect(() => {
     const handleScroll = () => {
@@ -104,7 +180,9 @@ export default function App() {
   };
 
   const handleRemoveItem = (productId: string) => {
+    const item = cartItems.find(i => i.product.id === productId);
     setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
+    if (item) triggerToast(`Removed "${item.product.name}" from cart`);
   };
 
   const handleBuyNow = (product: Product, quantity = 1) => {
@@ -114,30 +192,86 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
-  const handleOrderComplete = (newOrder?: Order) => {
+  const handleOrderComplete = async (newOrder?: Order) => {
     if (newOrder) {
-      setOrders((prev) => [newOrder, ...prev]);
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newOrder,
+            user_id: session?.user?.id || undefined
+          })
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          throw new Error(errorData?.error || 'Failed to save order to database');
+        }
+        
+        const savedOrder = await res.json();
+        setOrders((prev) => [savedOrder, ...prev]);
+        setCartItems([]); // Only clear cart if successful
+        
+        // Update local product stock without needing a full refresh
+        setProducts(prevProducts => prevProducts.map(p => {
+          const orderedItem = newOrder.items.find(i => i.id === p.id);
+          if (orderedItem) {
+            return { ...p, stock: Math.max(0, p.stock - orderedItem.quantity) };
+          }
+          return p;
+        }));
+        
+        triggerToast('Order placed successfully! Check your email for confirmation.');
+
+      } catch (e: any) {
+        console.error('Error saving order', e);
+        triggerToast(`Order failed: ${e.message}`);
+        // Do NOT clear cart or add to local state if order failed!
+      }
+    } else {
+      // If called without newOrder (e.g. manual clear), just clear cart
+      setCartItems([]);
     }
-    setCartItems([]);
   };
 
   // Admin Management Handlers
-  const handleAddProduct = (newProduct: Product) => {
+  const handleAddProduct = async (newProduct: Product) => {
     setProducts((prev) => [newProduct, ...prev]);
     triggerToast(`Product "${newProduct.name}" added to catalog!`);
+    try {
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify(newProduct)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const handleUpdateProduct = (updated: Product) => {
+  const handleUpdateProduct = async (updated: Product) => {
     setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
     triggerToast(`Product "${updated.name}" updated!`);
+    try {
+      await fetch(`/api/products/${updated.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify(updated)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== productId));
     triggerToast('Product deleted from catalog.');
+    try {
+      await fetch(`/api/products/${productId}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const handleUpdateOrderStatus = (
+  const handleUpdateOrderStatus = async (
     orderId: string,
     newStatus: Order['status'],
     trackingNumber?: string
@@ -154,18 +288,29 @@ export default function App() {
       )
     );
     triggerToast(`Order ${orderId} updated to ${newStatus.toUpperCase()}`);
+    try {
+      await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ status: newStatus, trackingNumber })
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const handleUpdateBannerConfig = (newConfig: StoreBannerConfig) => {
+  const handleUpdateBannerConfig = async (newConfig: StoreBannerConfig) => {
     setBannerConfig(newConfig);
     triggerToast('Store banners & settings updated!');
+    try {
+      await fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify(newConfig)
+      });
+    } catch (e) { console.error(e); }
   };
 
   const handleResetData = () => {
-    setProducts(PRODUCTS);
-    setOrders(INITIAL_ORDERS);
-    setBannerConfig(INITIAL_STORE_CONFIG);
-    triggerToast('Store reset to initial demo data.');
+    triggerToast('Reset is disabled. Data is loaded from the database.');
   };
 
   // Categorized products for homepage sections (live from products state)
@@ -211,6 +356,11 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenContact = () => {
+    const phoneNumber = bannerConfig?.supportPhone?.replace(/\D/g, '') || '919876543210';
+    window.open(`https://wa.me/${phoneNumber}?text=Hi%2C%20I%20need%20help%20with%20my%20order`, '_blank');
+  };
+
   const handleNavigateSection = (category: string) => {
     if (category === 'all') {
       setCatalogFilter('all');
@@ -225,22 +375,41 @@ export default function App() {
 
   // RENDER ADMIN DASHBOARD IF IN ADMIN MODE
   if (viewMode === 'admin') {
+    if (!adminToken) {
+      return (
+        <AdminLogin 
+          onLoginSuccess={(token) => {
+            localStorage.setItem('footenixAdminToken', token);
+            setAdminToken(token);
+          }} 
+        />
+      );
+    }
+
     return (
-      <AdminDashboard
-        products={products}
-        orders={orders}
-        bannerConfig={bannerConfig}
-        onAddProduct={handleAddProduct}
-        onUpdateProduct={handleUpdateProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onUpdateOrderStatus={handleUpdateOrderStatus}
-        onUpdateBannerConfig={handleUpdateBannerConfig}
-        onResetData={handleResetData}
-        onExitAdmin={() => {
-          setViewMode('store');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-      />
+      <>
+        {toastMessage && (
+          <div className="fixed top-4 right-4 z-[9999] bg-[#171923] text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2.5 text-sm animate-fade-in border border-neutral-700 max-w-md">
+            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="truncate">{toastMessage}</span>
+          </div>
+        )}
+        <AdminDashboard
+          products={products}
+          orders={orders}
+          bannerConfig={bannerConfig}
+          onAddProduct={handleAddProduct}
+          onUpdateProduct={handleUpdateProduct}
+          onDeleteProduct={handleDeleteProduct}
+          onUpdateOrderStatus={handleUpdateOrderStatus}
+          onUpdateBannerConfig={handleUpdateBannerConfig}
+          onResetData={handleResetData}
+          onExitAdmin={() => {
+            setViewMode('store');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      </>
     );
   }
 
@@ -274,19 +443,20 @@ export default function App() {
 
       {/* Main Top Navigation */}
       <Navbar
+        session={session}
         cartCount={totalCartCount}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenContact={() => setIsContactOpen(true)}
-        onOpenAdmin={() => {
-          setViewMode('admin');
+        onOpenContact={handleOpenContact}
+        onOpenAccount={() => {
+          setActiveTab('account');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        announcementText={bannerConfig.announcementText}
+        config={bannerConfig}
         activeTab={activeTab}
         onNavigate={(tab) => {
           if (tab === 'contact') {
-            setIsContactOpen(true);
+            handleOpenContact();
           } else {
             setActiveTab(tab);
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -387,6 +557,16 @@ export default function App() {
               addedIds={recentlyAddedIds}
             />
           </>
+        ) : activeTab === 'account' ? (
+          <UserDashboard session={session} />
+        ) : activeTab === 'legal' ? (
+          <LegalPages 
+            initialTab={legalTab} 
+            onBack={() => {
+              setActiveTab('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
+          />
         ) : (
           /* Full Catalog View */
           <CatalogView
@@ -401,10 +581,16 @@ export default function App() {
 
       {/* Comprehensive Footer with Terracotta Newsletter & Admin Link */}
       <Footer
+        config={bannerConfig}
         onNavigateSection={handleNavigateSection}
-        onOpenContact={() => setIsContactOpen(true)}
+        onOpenContact={handleOpenContact}
         onOpenAdmin={() => {
           setViewMode('admin');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onNavigateLegal={(tab) => {
+          setLegalTab(tab as any);
+          setActiveTab('legal');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
@@ -443,22 +629,20 @@ export default function App() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         items={cartItems}
+        config={bannerConfig}
         onOrderComplete={handleOrderComplete}
+        session={session}
       />
 
       {/* Collector Contact & Support Modal */}
       <ContactModal
         isOpen={isContactOpen}
         onClose={() => setIsContactOpen(false)}
-        onOpenAdmin={() => {
-          setIsContactOpen(false);
-          setViewMode('admin');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
       />
 
       {/* App-like Mobile Bottom Navigation Bar (Nike / ASOS / Amazon standard) */}
       <MobileBottomNav
+        session={session}
         activeTab={activeTab}
         cartCount={totalCartCount}
         onNavigateHome={() => {
@@ -471,11 +655,11 @@ export default function App() {
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenCart={() => setIsCartOpen(true)}
-        onOpenAdmin={() => {
-          setViewMode('admin');
+        onOpenContact={handleOpenContact}
+        onOpenAccount={() => {
+          setActiveTab('account');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        onOpenContact={() => setIsContactOpen(true)}
       />
     </div>
   );

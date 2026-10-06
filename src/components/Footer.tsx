@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Mail, CheckCircle, ArrowRight, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { Mail, CheckCircle, ArrowRight, ShieldCheck, Truck, RefreshCw, Instagram, Twitter, Facebook } from 'lucide-react';
+import { StoreBannerConfig } from '../data/storeConfig';
 
 interface FooterProps {
+  config: StoreBannerConfig;
   onNavigateSection: (category: string) => void;
   onOpenContact: () => void;
   onOpenAdmin?: () => void;
+  onNavigateLegal?: (tab: string) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ config, onNavigateSection, onOpenContact, onOpenAdmin, onNavigateLegal }) => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [promoRevealed, setPromoRevealed] = useState(false);
@@ -68,10 +71,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact
           <div className="md:col-span-5 flex flex-col justify-between">
             <div>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-store font-light tracking-tight text-white mb-4">
-                Footenix Store
+                {config.storeName || 'Store'}
               </h2>
-              <p className="text-xs sm:text-sm text-neutral-400 max-w-sm leading-relaxed mb-6">
-                RARE CARDS AND PREMIUM QUALITY. Welcome to the ultimate destination for football card collectors. Authentic trading cards, graded rookies, limited editions, and archival wall posters.
+              <p className="text-xs sm:text-sm text-neutral-400 max-w-sm leading-relaxed mb-6 whitespace-pre-line">
+                {config.storeDescription || 'Welcome to the store.'}
               </p>
             </div>
 
@@ -85,6 +88,25 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact
                 <Truck className="w-4 h-4 text-[#245bff]" />
                 <span>Safe Armored Packaging</span>
               </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="flex items-center gap-4 mt-6">
+              {config.instagramUrl && (
+                <a href={config.instagramUrl} target="_blank" rel="noreferrer" className="text-neutral-400 hover:text-white transition-colors">
+                  <Instagram className="w-5 h-5" />
+                </a>
+              )}
+              {config.twitterUrl && (
+                <a href={config.twitterUrl} target="_blank" rel="noreferrer" className="text-neutral-400 hover:text-white transition-colors">
+                  <Twitter className="w-5 h-5" />
+                </a>
+              )}
+              {config.facebookUrl && (
+                <a href={config.facebookUrl} target="_blank" rel="noreferrer" className="text-neutral-400 hover:text-white transition-colors">
+                  <Facebook className="w-5 h-5" />
+                </a>
+              )}
             </div>
           </div>
 
@@ -136,12 +158,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact
                   </button>
                 </li>
                 <li>
-                  <button onClick={onOpenContact} className="hover:text-white transition-colors">
+                  <button onClick={() => onNavigateLegal && onNavigateLegal('shipping')} className="hover:text-white transition-colors">
                     Shipping &amp; Delivery Policy
                   </button>
                 </li>
                 <li>
-                  <button onClick={onOpenContact} className="hover:text-white transition-colors">
+                  <button onClick={() => onNavigateLegal && onNavigateLegal('refund')} className="hover:text-white transition-colors">
                     Returns &amp; Replacement
                   </button>
                 </li>
@@ -165,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact
               </h4>
               <ul className="space-y-2 text-xs text-neutral-400">
                 <li>
-                  <button onClick={onOpenContact} className="hover:text-white transition-colors">
+                  <button onClick={() => onNavigateLegal && onNavigateLegal('about')} className="hover:text-white transition-colors">
                     About Footenix Store
                   </button>
                 </li>
@@ -189,19 +211,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact
                     Contact Us
                   </button>
                 </li>
-                {onOpenAdmin && (
-                  <li>
-                    <button
-                      onClick={onOpenAdmin}
-                      className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors flex items-center gap-1.5"
-                    >
-                      <span>Store Admin Portal</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
-                        Staff
-                      </span>
-                    </button>
-                  </li>
-                )}
+                <li>
+                  <button onClick={() => onNavigateLegal && onNavigateLegal('privacy')} className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onNavigateLegal && onNavigateLegal('terms')} className="hover:text-white transition-colors">
+                    Terms of Service
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -209,7 +228,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenContact
 
         {/* Bottom Sub-bar: Copyright & Payment Badges */}
         <div className="mt-14 pt-6 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
-          <p>© {new Date().getFullYear()} Footenix Store. All rights reserved. Handled with collector care.</p>
+          <div className="flex items-center gap-6">
+            <p>© {new Date().getFullYear()} {config.storeName || 'Store'}. All rights reserved.</p>
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="hover:text-white font-medium transition-colors flex items-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Admin Login</span>
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-[10px] uppercase font-mono tracking-wider text-neutral-400">SECURE PAYMENTS:</span>
             <div className="flex items-center gap-1.5 font-mono text-[10px] text-neutral-400">

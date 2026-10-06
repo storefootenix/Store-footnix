@@ -59,16 +59,16 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap sm:flex-nowrap items-center w-full sm:w-auto gap-2.5">
           <button
             onClick={() => onNavigateTab('orders')}
-            className="px-3.5 py-2 text-xs font-semibold rounded border border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-50 transition-colors cursor-pointer"
+            className="flex-1 sm:flex-none justify-center px-3.5 py-2 text-xs font-semibold rounded border border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-50 transition-colors cursor-pointer"
           >
             Fulfill Orders ({pendingOrders.length})
           </button>
           <button
             onClick={onOpenAddProduct}
-            className="px-4 py-2 text-xs font-semibold rounded bg-[#245bff] hover:bg-[#1a47d6] text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            className="flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-semibold rounded bg-[#245bff] hover:bg-[#1a47d6] text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Product</span>

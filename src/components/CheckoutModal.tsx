@@ -2,42 +2,82 @@ import React, { useState } from 'react';
 import { CartItem } from './CartDrawer';
 import { ProductVisual } from './ProductVisual';
 import { Order } from '../data/orders';
-import { X, CheckCircle, ShieldCheck, Truck, CreditCard, Banknote, ArrowRight, Package } from 'lucide-react';
+import { X, CheckCircle, ShieldCheck, Truck, CreditCard, Banknote, ArrowRight, Package, Tag } from 'lucide-react';
+import { StoreBannerConfig } from '../data/storeConfig';
+import { Session } from '@supabase/supabase-js';
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
+  config: StoreBannerConfig;
   onOrderComplete: (order?: Order) => void;
+  session?: Session | null;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   onClose,
   items,
+  config,
   onOrderComplete,
+  session,
 }) => {
-  const [step, setStep] = useState<'form' | 'success'>('form');
+  const [step, setStep] = useState<'form' | 'processing' | 'success'>('form');
   const [formData, setFormData] = useState({
-    name: 'Kajal Yadav',
-    email: 'yadavkajal3279@gmail.com',
+    name: session?.user?.user_metadata?.full_name || 'Kajal Yadav',
+    email: session?.user?.email || 'yadavkajal3279@gmail.com',
     phone: '9876543210',
     address: 'Flat 402, Royal Palms, Link Road',
     city: 'Mumbai',
     pincode: '400053',
-    paymentMethod: 'cod' as 'cod' | 'upi' | 'card',
+    paymentMethod: 'cod' as 'cod' | 'razorpay' | 'card',
   });
   const [orderId, setOrderId] = useState('');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoError, setPromoError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   if (!isOpen) return null;
 
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shipping = subtotal >= 499 ? 0 : 49;
-  const total = subtotal + shipping;
+  
+  let discountAmount = 0;
+  if (promoApplied && config.activePromoCode) {
+    if (config.activePromoDiscountType === 'percentage') {
+      discountAmount = subtotal * (config.activePromoDiscountValue / 100);
+    } else {
+      discountAmount = config.activePromoDiscountValue;
+    }
+  }
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+  
+  const shipping = discountedSubtotal >= (config.freeShippingThreshold || 499) ? 0 : 49;
+  const total = discountedSubtotal + shipping;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newOrderId = `FTX-${Math.floor(100000 + Math.random() * 900000)}`;
+  const handleApplyPromo = () => {
+    if (!promoCode.trim()) return;
+    if (config.activePromoCode && promoCode.trim().toUpperCase() === config.activePromoCode.toUpperCase()) {
+      setPromoApplied(true);
+      setPromoError('');
+    } else {
+      setPromoApplied(false);
+      setPromoError('Invalid or expired promo code');
+    }
+  };
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const proceedWithOrderCreation = (newOrderId: string, paymentMethod: string, status: string) => {
     setOrderId(newOrderId);
     setStep('success');
 
@@ -60,12 +100,89 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       subtotal,
       shipping,
       total,
-      paymentMethod: formData.paymentMethod,
-      status: 'pending',
+      paymentMethod,
+      status: status as any,
       createdAt: new Date().toISOString(),
     };
 
     onOrderComplete(createdOrder);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newOrderId = `FTX-${Math.floor(100000 + Math.random() * 900000)}`;
+    
+    setStep('processing');
+    
+    if (formData.paymentMethod === 'razorpay') {
+      const res = await loadRazorpay();
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        setStep('form');
+        return;
+      }
+      
+      try {
+        const orderRes = await fetch('/api/payment/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: total })
+        });
+        const orderData = await orderRes.json();
+        
+        const options = {
+          key: 'rzp_test_dummy', // Will be ignored if mock, or should be dynamically fetched if real
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: config.storeName || 'Footenix Store',
+          description: "Order Payment",
+          order_id: orderData.id,
+          handler: async function (response: any) {
+            try {
+              const verifyRes = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(response)
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                proceedWithOrderCreation(newOrderId, 'razorpay', 'processing');
+              } else {
+                alert('Payment verification failed!');
+                setStep('form');
+              }
+            } catch (err) {
+              alert('Verification error');
+              setStep('form');
+            }
+          },
+          prefill: {
+            name: formData.name,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: { color: "#245bff" },
+          modal: {
+            ondismiss: function() {
+              setStep('form');
+            }
+          }
+        };
+        
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (response: any){
+          alert('Payment failed: ' + response.error.description);
+          setStep('form');
+        });
+        rzp.open();
+      } catch (err) {
+        alert('Failed to initiate payment');
+        setStep('form');
+      }
+    } else {
+      // COD
+      proceedWithOrderCreation(newOrderId, formData.paymentMethod, 'pending');
+    }
   };
 
   const handleDone = () => {
@@ -106,7 +223,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             )}
           </div>
 
-          {step === 'form' ? (
+          {step === 'processing' ? (
+            <div className="p-12 flex flex-col items-center justify-center min-h-[400px]">
+              <div className="w-16 h-16 border-4 border-[#e5edff] border-t-[#245bff] rounded-full animate-spin mb-6"></div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2 font-serif-store">Processing Order...</h3>
+              <p className="text-sm text-neutral-500 text-center max-w-xs">
+                {formData.paymentMethod === 'razorpay' 
+                  ? 'Awaiting secure payment confirmation from Razorpay. Please do not close this window.'
+                  : 'Finalizing your collector items and securing inventory...'}
+              </p>
+            </div>
+          ) : step === 'form' ? (
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Order Summary Snapshot */}
               <div className="bg-neutral-50 p-4 rounded-md border border-neutral-200 text-xs">
@@ -126,6 +253,46 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Promo Code Section */}
+              <div className="bg-white p-4 rounded-md border border-neutral-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#245bff]" />
+                    Have a Promo Code?
+                  </label>
+                  {promoApplied && (
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                      APPLIED: -Rs. {discountAmount.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => {
+                      setPromoCode(e.target.value);
+                      if (promoError) setPromoError('');
+                    }}
+                    disabled={promoApplied}
+                    placeholder="Enter code here"
+                    className="flex-1 p-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={promoApplied ? () => { setPromoApplied(false); setPromoCode(''); } : handleApplyPromo}
+                    className={`px-4 py-2 text-xs font-bold rounded transition-colors ${
+                      promoApplied
+                        ? 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                        : 'bg-[#245bff] text-white hover:bg-[#1a47d6]'
+                    }`}
+                  >
+                    {promoApplied ? 'Remove' : 'Apply'}
+                  </button>
+                </div>
+                {promoError && <p className="text-[10px] text-rose-500 font-medium">{promoError}</p>}
               </div>
 
               {/* Customer Contact & Address Form */}
@@ -243,7 +410,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                   <label
                     className={`flex items-start gap-3 p-3 border rounded-md cursor-pointer transition-colors ${
-                      formData.paymentMethod === 'upi'
+                      formData.paymentMethod === 'razorpay'
                         ? 'border-[#245bff] bg-blue-50/50'
                         : 'border-neutral-200 hover:bg-neutral-50'
                     }`}
@@ -251,15 +418,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value="upi"
-                      checked={formData.paymentMethod === 'upi'}
-                      onChange={() => setFormData({ ...formData, paymentMethod: 'upi' })}
+                      value="razorpay"
+                      checked={formData.paymentMethod === 'razorpay'}
+                      onChange={() => setFormData({ ...formData, paymentMethod: 'razorpay' })}
                       className="mt-0.5 text-[#245bff]"
                     />
                     <div>
                       <div className="font-semibold text-neutral-900 flex items-center gap-1.5">
                         <CreditCard className="w-4 h-4 text-[#245bff]" />
-                        <span>Instant UPI / Cards</span>
+                        <span>Razorpay Secure (UPI / Cards)</span>
                       </div>
                       <span className="text-[11px] text-neutral-500 block mt-0.5">
                         GPay, PhonePe, Cards, NetBanking
@@ -267,6 +434,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </div>
                   </label>
                 </div>
+              </div>
+
+              {/* DPDP Compliance Checkbox */}
+              <div className="pt-2 border-t border-neutral-100">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="peer appearance-none w-4 h-4 border-2 border-neutral-300 rounded-sm checked:bg-[#245bff] checked:border-[#245bff] focus:outline-none focus:ring-2 focus:ring-[#245bff]/30 transition-all cursor-pointer shrink-0"
+                    />
+                    <CheckCircle className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                  </div>
+                  <div className="text-[11px] text-neutral-600 leading-tight">
+                    I agree to the <span className="text-[#245bff] hover:underline">Terms of Service</span> and acknowledge that my shipping and payment details will be securely processed by our authorized partners (Delhivery, Razorpay) in compliance with the <span className="font-semibold text-neutral-800">DPDP Act 2023</span>.
+                  </div>
+                </label>
               </div>
 
               {/* Sticky Submit Button on Mobile Viewports */}
@@ -279,7 +465,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <button
                   type="submit"
-                  className="bg-[#245bff] hover:bg-[#1a4de6] text-white text-xs sm:text-sm font-bold uppercase tracking-wider h-11 sm:h-12 px-5 sm:px-6 rounded shadow-md transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+                  disabled={!acceptedTerms}
+                  className={`text-white text-xs sm:text-sm font-bold uppercase tracking-wider h-11 sm:h-12 px-5 sm:px-6 rounded shadow-md transition-all flex items-center gap-2 cursor-pointer ${
+                    acceptedTerms 
+                      ? 'bg-[#245bff] hover:bg-[#1a4de6] active:scale-95' 
+                      : 'bg-neutral-300 cursor-not-allowed'
+                  }`}
                 >
                   <span>CONFIRM ORDER</span>
                   <ArrowRight className="w-4 h-4" />

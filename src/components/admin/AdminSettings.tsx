@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StoreBannerConfig } from '../../data/storeConfig';
 import { Product } from '../../data/products';
 import { Order } from '../../data/orders';
-import { Save, Check, Download, RotateCcw, ShieldCheck, Truck, Banknote, Mail, Phone } from 'lucide-react';
+import { Save, Check, Download, RotateCcw, ShieldCheck, Truck, Banknote, Mail, Phone, Store } from 'lucide-react';
 
 interface AdminSettingsProps {
   config: StoreBannerConfig;
@@ -137,6 +137,59 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           </div>
         </div>
 
+        {/* Promo Codes & Coupons */}
+        <div className="p-5 bg-white rounded-lg border border-neutral-200 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#171923]">
+            <Banknote className="w-4 h-4 text-[#245bff]" />
+            <span>Promo Codes &amp; Coupons</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                Active Promo Code
+              </label>
+              <input
+                type="text"
+                value={formData.activePromoCode || ''}
+                onChange={(e) => setFormData({ ...formData, activePromoCode: e.target.value.toUpperCase() })}
+                placeholder="e.g. FIRST5"
+                className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none uppercase"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                Discount Type
+              </label>
+              <select
+                value={formData.activePromoDiscountType || 'percentage'}
+                onChange={(e) => setFormData({ ...formData, activePromoDiscountType: e.target.value as 'percentage' | 'fixed' })}
+                className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none bg-white"
+              >
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (Rs.)</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                Discount Value
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.activePromoDiscountValue || 0}
+                onChange={(e) => setFormData({ ...formData, activePromoDiscountValue: Number(e.target.value) })}
+                className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-neutral-400">
+            Leave the Promo Code blank to disable coupons. The discount will be applied during checkout.
+          </p>
+        </div>
+
         {/* Contact & Support */}
         <div className="p-5 bg-white rounded-lg border border-neutral-200 shadow-xs space-y-4">
           <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#171923]">
@@ -167,6 +220,78 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 onChange={(e) => setFormData({ ...formData, supportEmail: e.target.value })}
                 className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none font-mono"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Branding & Social Links */}
+        <div className="p-5 bg-white rounded-lg border border-neutral-200 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#171923]">
+            <Store className="w-4 h-4 text-[#245bff]" />
+            <span>Store Branding &amp; Socials</span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                Store Name
+              </label>
+              <input
+                type="text"
+                value={formData.storeName || ''}
+                onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                Store Description (Footer)
+              </label>
+              <textarea
+                value={formData.storeDescription || ''}
+                onChange={(e) => setFormData({ ...formData, storeDescription: e.target.value })}
+                className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none h-20"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                  Instagram URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.instagramUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+                  placeholder="https://instagram.com/..."
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                  Twitter URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.twitterUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, twitterUrl: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+                  placeholder="https://twitter.com/..."
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                  Facebook URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.facebookUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+                  placeholder="https://facebook.com/..."
+                />
+              </div>
             </div>
           </div>
         </div>

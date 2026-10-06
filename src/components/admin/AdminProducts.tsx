@@ -13,6 +13,7 @@ import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface AdminProductsProps {
   products: Product[];
@@ -42,6 +43,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
     category: 'cards' as 'packs' | 'cards' | 'stickers' | 'posters',
     price: 199,
     originalPrice: 249,
+    stock: 10,
     imageUrl: '',
     description: '',
     badge: 'New Arrival',
@@ -53,6 +55,40 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
   };
 
   const [formData, setFormData] = useState(initialFormData);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `product_images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+      if (data?.publicUrl) {
+        setFormData(prev => ({ ...prev, imageUrl: data.publicUrl }));
+      }
+    } catch (err: any) {
+      console.error('Upload Error:', err);
+      alert('Error uploading file. Make sure you created the "products" storage bucket in Supabase and made it public!');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const showModal = isAddModalOpen || isLocalAddOpen || editingProduct !== null;
 
@@ -69,6 +105,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
       category: product.category,
       price: product.price,
       originalPrice: product.originalPrice || Math.round(product.price * 1.25),
+      stock: product.stock ?? 10,
       imageUrl: product.imageUrl || '',
       description: product.description,
       badge: product.badge || '',
@@ -98,6 +135,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
         category: formData.category,
         price: Number(formData.price),
         originalPrice: Number(formData.originalPrice),
+        stock: Number(formData.stock),
         imageUrl: formData.imageUrl,
         description: formData.description,
         badge: formData.badge || undefined,
@@ -120,6 +158,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
         category: formData.category,
         price: Number(formData.price),
         originalPrice: Number(formData.originalPrice),
+        stock: Number(formData.stock),
         imageType: formData.category === 'cards' ? 'card_ronaldo_icon' : formData.category === 'packs' ? 'pack_match_attax' : formData.category === 'posters' ? 'poster_ronaldo' : 'sticker_messi',
         imageUrl: formData.imageUrl || 'https://footenix-store-2.myshopify.com/cdn/shop/files/Footenix_Store_Trading_Card_Packs.png?v=1790839312&width=700',
         description: formData.description || 'Authentic football collectible from Footenix Store.',
@@ -231,7 +270,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                 <th className="py-3 px-4">Price</th>
                 <th className="py-3 px-4">Original</th>
                 <th className="py-3 px-4">Badge</th>
-                <th className="py-3 px-4">Reviews</th>
+                <th className="py-3 px-4">Stock</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -290,8 +329,14 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                         <span className="text-neutral-400">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 font-mono text-neutral-600">
-                      ★ {p.rating} ({p.reviewsCount})
+                    <td className="py-3 px-4 font-mono">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                        p.stock > 10 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        p.stock > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        'bg-rose-50 text-rose-700 border border-rose-200'
+                      }`}>
+                        {p.stock ?? 0} {p.stock === 1 ? 'unit' : 'units'}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -397,8 +442,8 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                   </div>
                 </div>
 
-                {/* Price and Original Price */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Price, Original Price and Stock */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
                       Selling Price (Rs.) *
@@ -416,7 +461,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
 
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
-                      Original Price (Rs. for Strikethrough)
+                      Original Price (Rs.)
                     </label>
                     <input
                       type="number"
@@ -427,19 +472,48 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                       className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
                     />
                   </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                      Available Stock *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="1"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+                      className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+                    />
+                  </div>
                 </div>
 
-                {/* Image URL with live preview */}
+                {/* Image URL & Upload */}
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
-                    Image URL (Shopify CDN / Web Link)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-neutral-700 uppercase">
+                      Product Image
+                    </label>
+                    <label className={`text-[10px] px-2 py-0.5 rounded border font-semibold transition-colors ${
+                      isUploading ? 'bg-neutral-200 text-neutral-500 border-neutral-200 cursor-not-allowed' : 'bg-[#245bff] hover:bg-blue-600 text-white border-transparent cursor-pointer'
+                    }`}>
+                      {isUploading ? 'Uploading...' : 'Upload File'}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div>
                   <div className="flex gap-2">
                     <input
                       type="url"
                       value={formData.imageUrl}
                       onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      placeholder="https://footenix-store-2.myshopify.com/cdn/shop/files/..."
+                      placeholder="Or paste an image URL..."
                       className="flex-1 px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
                     />
                     {formData.imageUrl && (

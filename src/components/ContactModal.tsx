@@ -4,10 +4,9 @@ import { X, Mail, Phone, MapPin, Send, CheckCircle, ShieldCheck } from 'lucide-r
 interface ContactModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenAdmin?: () => void;
 }
 
-export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onOpenAdmin }) => {
+export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) => {
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -18,9 +17,31 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onO
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to send message.');
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError('Something went wrong. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -124,33 +145,24 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onO
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-between">
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <span className="text-[11px] text-neutral-400">Response guaranteed in 24h</span>
-                <button
-                  type="submit"
-                  className="bg-[#245bff] hover:bg-[#1a4de6] text-white text-xs font-bold uppercase tracking-wider py-2.5 px-5 rounded transition-colors flex items-center gap-1.5"
-                >
-                  <span>Submit Message</span>
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {onOpenAdmin && (
-                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
-                  <span className="text-neutral-500">Store Staff / Owner?</span>
+                <div className="flex flex-col items-end">
                   <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenAdmin();
-                    }}
-                    className="text-[#245bff] hover:underline font-semibold flex items-center gap-1"
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`text-xs font-bold uppercase tracking-wider py-2.5 px-5 rounded transition-colors flex items-center gap-1.5 ${
+                      isSubmitting 
+                        ? 'bg-neutral-400 text-white cursor-not-allowed'
+                        : 'bg-[#245bff] hover:bg-[#1a4de6] text-white cursor-pointer'
+                    }`}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Access Admin Portal →</span>
+                    <span>{isSubmitting ? 'Sending...' : 'Submit Message'}</span>
+                    {!isSubmitting && <Send className="w-3.5 h-3.5" />}
                   </button>
+                  {error && <span className="text-red-500 text-[10px] mt-1 font-medium">{error}</span>}
                 </div>
-              )}
+              </div>
             </form>
           )}
         </div>

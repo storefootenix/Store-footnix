@@ -1,26 +1,29 @@
 import React from 'react';
 import { Home, Grid, Search, ShoppingBag, ShieldCheck, User } from 'lucide-react';
+import { Session } from '@supabase/supabase-js';
 
 interface MobileBottomNavProps {
-  activeTab: 'home' | 'catalog' | 'contact';
+  session: Session | null;
+  activeTab: 'home' | 'catalog' | 'contact' | 'account';
   cartCount: number;
   onNavigateHome: () => void;
   onNavigateCatalog: () => void;
   onOpenSearch: () => void;
   onOpenCart: () => void;
-  onOpenAdmin?: () => void;
   onOpenContact: () => void;
+  onOpenAccount: () => void;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
+  session,
   activeTab,
   cartCount,
   onNavigateHome,
   onNavigateCatalog,
   onOpenSearch,
   onOpenCart,
-  onOpenAdmin,
   onOpenContact,
+  onOpenAccount,
 }) => {
   return (
     <nav
@@ -95,32 +98,26 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           </span>
         </button>
 
-        {/* 5. Admin or Account */}
-        {onOpenAdmin ? (
-          <button
-            onClick={onOpenAdmin}
-            className="flex flex-col items-center justify-center h-full py-1 text-neutral-700 hover:text-[#245bff] active:scale-90 transition-transform cursor-pointer"
-            aria-label="Admin Dashboard"
-          >
-            <ShieldCheck className="w-5 h-5 stroke-[2] text-[#245bff]" />
-            <span className="text-[10px] font-bold mt-0.5 text-[#245bff] tracking-tight">
-              Admin
-            </span>
-          </button>
-        ) : (
-          <button
-            onClick={onOpenContact}
-            className={`flex flex-col items-center justify-center h-full py-1 active:scale-90 transition-transform cursor-pointer ${
-              activeTab === 'contact' ? 'text-[#245bff]' : 'text-neutral-500 hover:text-neutral-900'
-            }`}
-            aria-label="Support and Account"
-          >
-            <User className="w-5 h-5 stroke-[1.8]" />
-            <span className="text-[10px] font-semibold mt-0.5 tracking-tight">
-              Support
-            </span>
-          </button>
-        )}
+        {/* 5. Account */}
+        <button
+          onClick={onOpenAccount}
+          className={`flex flex-col items-center justify-center h-full py-1 active:scale-90 transition-transform cursor-pointer relative ${
+            activeTab === 'account' ? 'text-[#245bff]' : 'text-neutral-500 hover:text-neutral-900'
+          }`}
+          aria-label="Account"
+        >
+          {session?.user?.user_metadata?.avatar_url ? (
+            <img src={session.user.user_metadata.avatar_url} referrerPolicy="no-referrer" alt="Profile" className="w-5 h-5 rounded-full border border-neutral-200" />
+          ) : (
+            <User className={`w-5 h-5 ${activeTab === 'account' ? 'stroke-[2.4]' : 'stroke-[1.8]'}`} />
+          )}
+          <span className={`text-[10px] mt-0.5 tracking-tight ${activeTab === 'account' ? 'font-bold' : 'font-medium'}`}>
+            Account
+          </span>
+          {activeTab === 'account' && (
+            <span className="w-1 h-1 bg-[#245bff] rounded-full absolute bottom-1" />
+          )}
+        </button>
       </div>
     </nav>
   );

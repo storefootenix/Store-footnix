@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Product, PRODUCTS } from '../data/products';
+import { Product } from '../data/products';
 import { ProductCard } from './ProductCard';
 import { Filter, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 
@@ -12,7 +12,7 @@ interface CatalogViewProps {
 }
 
 export const CatalogView: React.FC<CatalogViewProps> = ({
-  products = PRODUCTS,
+  products = [],
   initialCategory = 'all',
   onQuickView,
   onAddToCart,

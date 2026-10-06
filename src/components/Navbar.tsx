@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
 import { Search, ShoppingBag, User, ShieldCheck, Menu, X, ArrowRight, Package, Layers, Sparkles, Image as ImageIcon, Sticker } from 'lucide-react';
+import { StoreBannerConfig } from '../data/storeConfig';
+import { Session } from '@supabase/supabase-js';
 
 interface NavbarProps {
+  session: Session | null;
   cartCount: number;
   onOpenCart: () => void;
   onOpenSearch: () => void;
   onOpenContact: () => void;
-  onOpenAdmin?: () => void;
-  announcementText?: string;
+  onOpenAccount: () => void;
+  config: StoreBannerConfig;
   activeTab: 'home' | 'catalog' | 'contact';
   onNavigate: (tab: 'home' | 'catalog' | 'contact', category?: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  session,
   cartCount,
   onOpenCart,
   onOpenSearch,
   onOpenContact,
-  onOpenAdmin,
-  announcementText = 'SHOP FOR 2500 GET 1 CHROME X TOPPS FREE',
+  onOpenAccount,
+  config,
   activeTab,
   onNavigate,
 }) => {
@@ -34,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* 1. TOP ANNOUNCEMENT BAR (Matching exact screenshot: Deep Navy) */}
       <div className="w-full bg-[#101d3e] text-white py-2 px-3 sm:px-4 text-center">
         <p className="text-[10px] sm:text-xs font-semibold tracking-wider uppercase truncate">
-          {announcementText}
+          {config.announcementText || 'WELCOME TO THE STORE'}
         </p>
       </div>
 
@@ -53,12 +57,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={onOpenSearch}
-              className="p-2 text-neutral-800 hover:text-[#245bff] transition-colors rounded-full hover:bg-neutral-50 flex items-center gap-2 group"
+              className="px-3 py-1.5 md:py-2 md:pl-3 md:pr-10 text-neutral-500 hover:text-[#245bff] transition-colors rounded-full bg-neutral-100/80 hover:bg-neutral-100 border border-neutral-200/60 flex items-center gap-2 group cursor-pointer ml-1"
               title="Search collectibles"
               aria-label="Search"
             >
-              <Search className="w-5 h-5 stroke-[1.8]" />
-              <span className="hidden md:inline text-xs text-neutral-500 group-hover:text-neutral-800">
+              <Search className="w-4 h-4 stroke-[2]" />
+              <span className="hidden md:inline text-[13px]">
                 Search cards...
               </span>
             </button>
@@ -70,30 +74,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate('home')}
               className="text-xl sm:text-3xl md:text-4xl font-serif-store font-light tracking-tight text-[#171923] hover:opacity-90 transition-opacity truncate max-w-[200px] sm:max-w-none"
             >
-              Footenix Store
+              {config.storeName || 'Store'}
             </button>
           </div>
 
-          {/* Right: Admin Button, Collector Profile & Shopping Bag */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {onOpenAdmin && (
-              <button
-                onClick={onOpenAdmin}
-                className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-[#171923] hover:bg-[#245bff] text-white text-[11px] font-semibold transition-colors shadow-2xs mr-1 cursor-pointer"
-                title="Store Admin Panel"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Admin Panel</span>
-              </button>
-            )}
-
             <button
-              onClick={onOpenContact}
+              onClick={onOpenAccount}
               className="hidden sm:flex p-2 text-neutral-800 hover:text-[#245bff] transition-colors rounded-full hover:bg-neutral-50"
-              title="Collector Support"
-              aria-label="Account / Support"
+              title={session ? "Collector Dashboard" : "Collector Account"}
+              aria-label="Account"
             >
-              <User className="w-5 h-5 stroke-[1.8]" />
+              {session?.user?.user_metadata?.avatar_url ? (
+                <img src={session.user.user_metadata.avatar_url} referrerPolicy="no-referrer" alt="Profile" className="w-6 h-6 rounded-full border border-neutral-200" />
+              ) : (
+                <User className="w-5 h-5 stroke-[1.8]" />
+              )}
             </button>
 
             <button
@@ -144,14 +140,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Contact
           </button>
-          {onOpenAdmin && (
-            <button
-              onClick={onOpenAdmin}
-              className="transition-colors py-1 border-b-2 border-transparent text-[#245bff] hover:text-[#1a47d6] font-semibold"
-            >
-              Admin
-            </button>
-          )}
         </nav>
       </div>
 
@@ -171,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50">
                 <div>
                   <span className="font-serif-store text-lg font-bold text-[#171923]">
-                    Footenix Store
+                    {config.storeName || 'Store'}
                   </span>
                   <span className="text-[10px] text-neutral-500 font-mono block">
                     Authentic Collectibles
@@ -260,19 +248,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <User className="w-4 h-4 text-neutral-500" />
                 <span>Collector Support &amp; FAQ</span>
               </button>
-
-              {onOpenAdmin && (
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onOpenAdmin();
-                  }}
-                  className="w-full py-2 px-3 text-xs font-semibold rounded bg-[#171923] text-white flex items-center justify-center gap-2"
-                >
-                  <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                  <span>Store Owner Admin Panel</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
