@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './routes/api.js';
 import aiRoutes from './routes/ai.js';
+import { supabase } from './db.js';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -34,4 +35,15 @@ if (process.env.NODE_ENV === 'production') {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // --- SUPABASE WAKEUP SCRIPT ---
+  // Sends a tiny request to Supabase every 5 minutes to prevent the free tier from pausing
+  setInterval(async () => {
+    try {
+      await supabase.from('store_config').select('storeName').limit(1);
+      console.log(`[Supabase Keep-Alive] Ping sent at ${new Date().toISOString()}`);
+    } catch (err) {
+      console.error('[Supabase Keep-Alive] Ping failed:', err);
+    }
+  }, 5 * 60 * 1000); // 5 minutes
 });
