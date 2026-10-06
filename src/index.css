@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overscroll-behavior-y: none;
+  }
+
+  /* Prevent iOS Safari 16px auto-zoom on form inputs */
+  @media (max-width: 639px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Universal touch target and tap performance */
+  button, a, input, select {
+    touch-action: manipulation;
+  }
+}
+
+/* Safe area insets for modern mobile viewports (iPhone notch, home indicator) */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
+}
+
+.mb-safe {
+  margin-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+
+/* Hide scrollbar on mobile chip carousels while maintaining momentum scroll */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.font-serif-store {
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Continuous Infinite Product Marquee */
+@keyframes productMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-product-marquee {
+  display: flex;
+  width: max-content;
+  animation: productMarquee 35s linear infinite;
+  will-change: transform;
+}
+
+.animate-product-marquee:hover {
+  animation-play-state: paused;
+}
+
+.animate-product-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: productMarquee 35s linear infinite reverse;
+  will-change: transform;
+}
+
+.animate-product-marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
+/* Custom holographic card shimmer */
+.holo-shimmer {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 25%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.08) 75%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 200%;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Footenix Store",
+  "description": "RARE CARDS AND PREMIUM QUALITY. Welcome to the ultimate destination for football card collectors. Authentic football trading cards, rare, graded, rookie, and limited-edition releases.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
