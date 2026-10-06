@@ -33,17 +33,33 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  
-  // --- SUPABASE WAKEUP SCRIPT ---
-  // Sends a tiny request to Supabase every 5 minutes to prevent the free tier from pausing
-  setInterval(async () => {
-    try {
-      await supabase.from('store_config').select('storeName').limit(1);
-      console.log(`[Supabase Keep-Alive] Ping sent at ${new Date().toISOString()}`);
-    } catch (err) {
-      console.error('[Supabase Keep-Alive] Ping failed:', err);
-    }
-  }, 5 * 60 * 1000); // 5 minutes
+// Vercel Cron Job Keep-Alive Route
+app.get('/api/cron/keep-alive', async (req, res) => {
+  try {
+    await supabase.from('store_config').select('storeName').limit(1);
+    console.log(`[Supabase Keep-Alive] Cron ping successful at ${new Date().toISOString()}`);
+    res.status(200).json({ success: true, message: 'Keep-alive ping successful' });
+  } catch (err) {
+    console.error('[Supabase Keep-Alive] Cron ping failed:', err);
+    res.status(500).json({ success: false, error: 'Ping failed' });
+  }
 });
+
+// Only listen locally or on Render (Vercel Serverless handles the port binding)
+if (process.env.NODE_ENV !== 'production' || process.env.RENDER) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    
+    // Fallback interval for local/Render
+    setInterval(async () => {
+      try {
+        await supabase.from('store_config').select('storeName').limit(1);
+      } catch (err) {
+        console.error('[Supabase Keep-Alive] Interval ping failed:', err);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+  });
+}
+
+// Export the app for Vercel Serverless Functions
+export default app;
