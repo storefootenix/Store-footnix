@@ -234,7 +234,7 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
-  const handleOrderComplete = async (newOrder?: Order) => {
+  const handleOrderComplete = async (newOrder?: Order): Promise<boolean> => {
     if (newOrder) {
       try {
         const res = await fetch('/api/orders', {
@@ -265,15 +265,18 @@ export default function App() {
         }));
         
         triggerToast('Order placed successfully! Check your email for confirmation.');
+        return true;
 
       } catch (e: any) {
         console.error('Error saving order', e);
         triggerToast(`Order failed: ${e.message}`);
         // Do NOT clear cart or add to local state if order failed!
+        return false;
       }
     } else {
       // If called without newOrder (e.g. manual clear), just clear cart
       setCartItems([]);
+      return true;
     }
   };
 
