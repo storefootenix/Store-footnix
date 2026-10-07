@@ -111,13 +111,14 @@ router.post('/auth/login', async (req, res) => {
       .single();
 
     if (data && !error) {
-      // Generate a new token and save it to the DB
-      const token = crypto.randomBytes(32).toString('hex');
-      await supabase
-        .from('admin_users')
-        .update({ sessionToken: token })
-        .eq('id', data.id);
-        
+      let token = data.sessionToken;
+      if (!token) {
+        token = crypto.randomBytes(32).toString('hex');
+        await supabase
+          .from('admin_users')
+          .update({ sessionToken: token })
+          .eq('id', data.id);
+      }
       res.json({ success: true, token });
     } else {
       res.status(401).json({ success: false, error: 'Invalid username or password' });
