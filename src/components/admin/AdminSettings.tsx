@@ -34,8 +34,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const [creds, setCreds] = useState(defaultCreds);
   const [initialCreds, setInitialCreds] = useState(defaultCreds);
   const [credsSaved, setCredsSaved] = useState(false);
+  const [isSavingCreds, setIsSavingCreds] = useState(false);
   const [initialApiKeys, setInitialApiKeys] = useState(defaultKeys);
   const [keysSaved, setKeysSaved] = useState(false);
+  const [isSavingKeys, setIsSavingKeys] = useState(false);
 
   React.useEffect(() => {
     const token = localStorage.getItem('footenixAdminToken');
