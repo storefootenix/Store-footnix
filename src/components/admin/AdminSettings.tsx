@@ -62,6 +62,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
   const handleSaveCreds = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSavingCreds(true);
     const token = localStorage.getItem('footenixAdminToken');
     if (token) {
       try {
@@ -76,6 +77,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           alert('Failed to save credentials: ' + (err.error || 'Server error'));
+          setIsSavingCreds(false);
           return;
         }
         setInitialCreds({...creds});
@@ -84,7 +86,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         setTimeout(() => setCredsSaved(false), 3000);
       } catch (err) {
         alert('Network error while saving credentials.');
+      } finally {
+        setIsSavingCreds(false);
       }
+    } else {
+      setIsSavingCreds(false);
     }
   };
 
@@ -439,15 +445,15 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           ) : <div/>}
           <button 
             type="submit" 
-            disabled={JSON.stringify(apiKeys) === JSON.stringify(initialApiKeys)}
+            disabled={JSON.stringify(apiKeys) === JSON.stringify(initialApiKeys) || isSavingKeys}
             className={`px-6 py-2 font-semibold rounded text-xs shadow-xs flex items-center gap-2 transition-colors ${
               JSON.stringify(apiKeys) === JSON.stringify(initialApiKeys) 
                 ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed' 
                 : 'bg-neutral-800 hover:bg-black text-white cursor-pointer'
             }`}
           >
-            <Save className="w-4 h-4" />
-            <span>Save API Keys</span>
+            {isSavingKeys ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>{isSavingKeys ? "Saving..." : "Save API Keys"}</span>
           </button>
         </div>
       </form>
@@ -458,9 +464,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           <span>Admin Login Credentials</span>
         </div>
         
-        <p className="text-[11px] text-neutral-500">
-          Set the username and password for this admin panel. This updates the primary store account, leaving the developer backup account intact.
-        </p>
+        
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -479,15 +483,15 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           ) : <div/>}
           <button 
             type="submit" 
-            disabled={JSON.stringify(creds) === JSON.stringify(initialCreds)}
+            disabled={JSON.stringify(creds) === JSON.stringify(initialCreds) || isSavingCreds}
             className={`px-6 py-2 font-semibold rounded text-xs shadow-xs flex items-center gap-2 transition-colors ${
               JSON.stringify(creds) === JSON.stringify(initialCreds) 
                 ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed' 
                 : 'bg-neutral-800 hover:bg-black text-white cursor-pointer'
             }`}
           >
-            <Save className="w-4 h-4" />
-            <span>Update Login</span>
+            {isSavingCreds ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>{isSavingCreds ? "Saving..." : "Update Login"}</span>
           </button>
         </div>
       </form>
