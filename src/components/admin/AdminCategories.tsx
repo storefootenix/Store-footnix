@@ -177,16 +177,48 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-neutral-600 mb-0.5">
-                        Thumbnail Image URL
+                        Thumbnail Image (URL or Upload)
                       </label>
-                      <input
-                        type="url"
-                        value={editFormData.thumbUrl}
-                        onChange={(e) =>
-                          setEditFormData({ ...editFormData, thumbUrl: e.target.value })
-                        }
-                        className="w-full px-2 py-1 bg-white border border-neutral-300 rounded text-xs font-mono"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          value={editFormData.thumbUrl}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, thumbUrl: e.target.value })
+                          }
+                          className="flex-1 px-2 py-1 bg-white border border-neutral-300 rounded text-xs font-mono"
+                        />
+                        <label className="px-3 py-1 bg-neutral-100 border border-neutral-300 rounded text-xs text-neutral-700 cursor-pointer hover:bg-neutral-200 whitespace-nowrap flex items-center justify-center">
+                          Upload
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const uploadFormData = new FormData();
+                              uploadFormData.append('file', file);
+                              const token = localStorage.getItem('footenixAdminToken');
+                              try {
+                                const res = await fetch('/api/upload', {
+                                  method: 'POST',
+                                  headers: { 'Authorization': `Bearer ${token}` },
+                                  body: uploadFormData
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                  setEditFormData({ ...editFormData, thumbUrl: data.url });
+                                } else {
+                                  alert('Upload failed: ' + data.error);
+                                }
+                              } catch (err) {
+                                alert('Upload error');
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-1">
