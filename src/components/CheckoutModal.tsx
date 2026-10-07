@@ -25,12 +25,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   const [step, setStep] = useState<'form' | 'processing' | 'success'>('form');
   const [formData, setFormData] = useState({
-    name: session?.user?.user_metadata?.full_name || 'Kajal Yadav',
-    email: session?.user?.email || 'yadavkajal3279@gmail.com',
-    phone: '9876543210',
-    address: 'Flat 402, Royal Palms, Link Road',
-    city: 'Mumbai',
-    pincode: '400053',
+    name: session?.user?.user_metadata?.full_name || '',
+    email: session?.user?.email || '',
+    phone: '',
+    address: '',
+    city: '',
+    pincode: '',
     paymentMethod: 'cod' as 'cod' | 'razorpay' | 'card',
   });
   const [orderId, setOrderId] = useState('');
@@ -238,7 +238,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </p>
             </div>
           ) : step === 'form' ? (
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
               {/* Order Summary Snapshot */}
               <div className="bg-neutral-50 p-4 rounded-md border border-neutral-200 text-xs">
                 <div className="flex justify-between font-semibold text-neutral-800 pb-2 border-b border-neutral-200">
