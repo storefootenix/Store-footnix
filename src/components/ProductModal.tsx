@@ -149,7 +149,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
               {/* Purchase Actions (Sticky bar on mobile viewport) */}
               <div className="space-y-2.5 pt-3 border-t border-neutral-100 pb-safe sm:pb-0 bg-white sticky bottom-0 z-10">
-                <div className="flex items-center gap-2 sm:gap-3">
+                {product.stock <= 0 ? (
+                  <div className="flex items-center justify-center bg-neutral-100 text-neutral-500 font-bold uppercase tracking-wider h-11 px-4 rounded shadow-inner w-full">
+                    Sold Out
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 sm:gap-3">
                   <div className="flex items-center border border-neutral-300 rounded h-11">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -162,7 +168,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       {quantity}
                     </span>
                     <button
-                      onClick={() => setQuantity(quantity + 1)}
+                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                       className="w-10 h-full flex items-center justify-center hover:bg-neutral-100 text-neutral-600 transition-colors active:scale-90 cursor-pointer"
                       aria-label="Increase quantity"
                     >
@@ -192,6 +198,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   <span>Buy Now</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
+
+                  </>
+                )}
 
                 <div className="flex items-center justify-center gap-4 text-[10px] text-neutral-500 pt-1">
                   <span className="flex items-center gap-1">

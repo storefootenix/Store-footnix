@@ -23,6 +23,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         className="relative overflow-hidden cursor-pointer rounded-sm bg-neutral-50 border border-neutral-100 active:opacity-90"
         onClick={() => onQuickView(product)}
       >
+        {product.stock <= 0 && (
+          <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center">
+            <span className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-xs shadow-md">
+              Sold Out
+            </span>
+          </div>
+        )}
         <ProductVisual
           type={product.imageType}
           imageUrl={product.imageUrl}
@@ -30,22 +37,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         />
 
         {/* Mobile quick-add button (Always visible on mobile bottom-right for instant 1-tap add, hover on desktop) */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart(product);
-          }}
-          className={`absolute bottom-2 right-2 w-9 h-9 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-md transition-all duration-200 cursor-pointer ${
-            isAdded
-              ? 'bg-emerald-600 text-white'
-              : 'bg-white/95 hover:bg-[#245bff] text-neutral-800 hover:text-white border border-neutral-200/80 active:scale-85'
-          }`}
-          title="Add to cart"
-          aria-label={`Add ${product.name} to cart`}
-        >
-          {isAdded ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Plus className="w-4 h-4 stroke-[2.5]" />}
-        </button>
+        {product.stock > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(product);
+            }}
+            className={`absolute bottom-2 right-2 w-9 h-9 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-md transition-all duration-200 cursor-pointer ${
+              isAdded
+                ? 'bg-emerald-600 text-white'
+                : 'bg-white/95 hover:bg-[#245bff] text-neutral-800 hover:text-white border border-neutral-200/80 active:scale-85'
+            }`}
+            title="Add to cart"
+            aria-label={`Add ${product.name} to cart`}
+          >
+            {isAdded ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Plus className="w-4 h-4 stroke-[2.5]" />}
+          </button>
+        )}
 
         {/* Desktop hover quick view bar */}
         <div className="hidden sm:flex absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center">
@@ -83,12 +92,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
           <button
+            disabled={product.stock <= 0}
             onClick={() => onAddToCart(product)}
-            className={`text-[11px] font-semibold transition-colors px-1 py-0.5 rounded cursor-pointer ${
-              isAdded ? 'text-emerald-600 font-bold' : 'text-[#245bff] hover:underline'
+            className={`text-[11px] font-semibold transition-colors px-1 py-0.5 rounded ${
+              product.stock <= 0 ? 'text-neutral-400 cursor-not-allowed' :
+              isAdded ? 'text-emerald-600 font-bold cursor-pointer' : 'text-[#245bff] hover:underline cursor-pointer'
             }`}
           >
-            {isAdded ? 'Added ✓' : '+ Add'}
+            {product.stock <= 0 ? 'Sold Out' : isAdded ? 'Added ✓' : '+ Add'}
           </button>
         </div>
       </div>

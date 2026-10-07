@@ -209,6 +209,23 @@ router.get('/orders', async (req, res) => {
 router.post('/orders', async (req, res) => {
   console.log('Received POST /orders', req.body);
   const orderData = { ...req.body };
+
+  // Verify stock before creating order
+  for (const item of orderData.items) {
+    const { data: productData, error: fetchError } = await supabase
+      .from('products')
+      .select('stock, name')
+      .eq('id', item.id)
+      .single();
+      
+    if (fetchError || !productData) {
+      return res.status(400).json({ error: `Product ${item.name} not found` });
+    }
+    
+    if ((productData.stock || 0) < item.quantity) {
+      return res.status(400).json({ error: `Insufficient stock for ${item.name}. Available: ${productData.stock || 0}` });
+    }
+  }
   
   // Auto-create Delhivery shipment for prepaid (Razorpay) orders
   const settings = await getSettings();
