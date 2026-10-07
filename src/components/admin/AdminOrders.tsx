@@ -376,9 +376,13 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
                           <button
                             onClick={async () => {
                               try {
+                                const token = localStorage.getItem('footenixAdminToken');
                                 const res = await fetch('/api/shipping/create-shipment', {
                                   method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
+                                  headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                  },
                                   body: JSON.stringify({ orderId: activeOrder.id })
                                 });
                                 const data = await res.json();

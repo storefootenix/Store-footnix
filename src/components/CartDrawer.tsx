@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product } from '../data/products';
 import { ProductVisual } from './ProductVisual';
+import { StoreBannerConfig } from '../data/storeConfig';
 import { X, Trash2, Plus, Minus, ArrowRight, Gift, Tag, Check, ShieldCheck } from 'lucide-react';
 
 export interface CartItem {
@@ -15,6 +16,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
+  config: StoreBannerConfig;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -24,6 +26,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onCheckout,
+  config,
 }) => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
@@ -39,7 +42,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const discountAmount = rawSubtotal * appliedDiscount;
   const subtotalAfterDiscount = rawSubtotal - discountAmount;
-  const shipping = rawSubtotal >= 499 || rawSubtotal === 0 ? 0 : 49;
+  const shipping = rawSubtotal >= (config.freeShippingThreshold || 499) || rawSubtotal === 0 ? 0 : (config.shippingRate ?? 49);
   const grandTotal = subtotalAfterDiscount + shipping;
 
   const FREE_GIFT_THRESHOLD = 2500;

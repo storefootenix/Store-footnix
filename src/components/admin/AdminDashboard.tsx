@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product } from '../../data/products';
 import { Order } from '../../data/orders';
-import { StoreBannerConfig } from '../../data/storeConfig';
+import { StoreBannerConfig, CategoryConfigItem } from '../../data/storeConfig';
 import { AdminOverview } from './AdminOverview';
 import { AdminProducts } from './AdminProducts';
 import { AdminOrders } from './AdminOrders';
@@ -29,11 +29,13 @@ interface AdminDashboardProps {
   products: Product[];
   orders: Order[];
   bannerConfig: StoreBannerConfig;
+  categories: CategoryConfigItem[];
   onAddProduct: (newProduct: Product) => void;
   onUpdateProduct: (updated: Product) => void;
   onDeleteProduct: (productId: string) => void;
   onUpdateOrderStatus: (orderId: string, newStatus: Order['status'], trackingNumber?: string) => void;
   onUpdateBannerConfig: (newConfig: StoreBannerConfig) => void;
+  onUpdateCategories: (newCategories: CategoryConfigItem[]) => void;
   onResetData: () => void;
   onExitAdmin: () => void;
 }
@@ -42,11 +44,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   products,
   orders,
   bannerConfig,
+  categories,
   onAddProduct,
   onUpdateProduct,
   onDeleteProduct,
   onUpdateOrderStatus,
   onUpdateBannerConfig,
+  onUpdateCategories,
   onResetData,
   onExitAdmin,
 }) => {
@@ -277,6 +281,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'categories' && (
             <AdminCategories
               products={products}
+              categories={categories}
+              onUpdateCategories={onUpdateCategories}
               onNavigateToCategoryProducts={(cat) => {
                 setActiveTab('products');
               }}

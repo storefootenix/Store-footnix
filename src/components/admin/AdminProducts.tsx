@@ -63,28 +63,25 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `product_images/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('products')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data } = supabase.storage
-        .from('products')
-        .getPublicUrl(filePath);
-
-      if (data?.publicUrl) {
-        setFormData(prev => ({ ...prev, imageUrl: data.publicUrl }));
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      const token = localStorage.getItem('footenixAdminToken');
+      
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: uploadFormData
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      } else {
+        alert('Upload failed: ' + data.error);
       }
     } catch (err: any) {
       console.error('Upload Error:', err);
-      alert('Error uploading file. Make sure you created the "products" storage bucket in Supabase and made it public!');
+      alert('Network error while uploading file.');
     } finally {
       setIsUploading(false);
     }

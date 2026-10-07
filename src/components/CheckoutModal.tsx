@@ -53,7 +53,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   }
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   
-  const shipping = discountedSubtotal >= (config.freeShippingThreshold || 499) ? 0 : 49;
+  const shipping = discountedSubtotal >= (config.freeShippingThreshold || 499) ? 0 : (config.shippingRate ?? 49);
   const total = discountedSubtotal + shipping;
 
   const handleApplyPromo = () => {

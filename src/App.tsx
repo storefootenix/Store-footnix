@@ -24,8 +24,43 @@ import { Product } from './data/products';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { Order } from './data/orders';
-import { StoreBannerConfig } from './data/storeConfig';
+import { StoreBannerConfig, CategoryConfigItem } from './data/storeConfig';
 import { Check, ArrowUp } from 'lucide-react';
+
+const DEFAULT_CATEGORIES: CategoryConfigItem[] = [
+  {
+    id: 'packs',
+    name: 'Packs',
+    subtitle: 'Sealed Packs & Boxes',
+    badge: 'Booster Packs',
+    badgeColor: 'bg-blue-600 text-white',
+    thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/Footenix_Store_Trading_Card_Packs.png?v=1790839312&width=600',
+  },
+  {
+    id: 'cards',
+    name: 'Match Attax Cards',
+    subtitle: 'Singles, Foils & 100 Club',
+    badge: 'Rare Foils',
+    badgeColor: 'bg-amber-600 text-white',
+    thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsApp_Image_2026-09-27_at_14.25.27.jpg?v=1790499453&width=600',
+  },
+  {
+    id: 'stickers',
+    name: 'Stickers',
+    subtitle: 'Waterproof Vinyl Stickers',
+    badge: 'Vinyl Die-Cut',
+    badgeColor: 'bg-purple-600 text-white',
+    thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-13at18.13.44.jpg?v=1789304371&width=600',
+  },
+  {
+    id: 'posters',
+    name: 'Posters',
+    subtitle: 'A5 Archival Wall Prints',
+    badge: 'Football Posters',
+    badgeColor: 'bg-emerald-600 text-white',
+    thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-29at20.10.24.jpg?v=1790698062&width=600',
+  },
+];
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'store' | 'admin'>('store');
@@ -59,8 +94,10 @@ export default function App() {
     twitterUrl: '',
     activePromoCode: 'FIRST5',
     activePromoDiscountType: 'percentage',
-    activePromoDiscountValue: 5
+    activePromoDiscountValue: 5,
+    shippingRate: 49
   });
+  const [categories, setCategories] = useState<CategoryConfigItem[]>(DEFAULT_CATEGORIES);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -98,10 +135,11 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, ordersRes, configRes] = await Promise.all([
+        const [prodRes, ordersRes, configRes, categoriesRes] = await Promise.all([
           fetch('/api/products'),
           fetch('/api/orders'),
-          fetch('/api/config')
+          fetch('/api/config'),
+          fetch('/api/categories')
         ]);
         
         if (prodRes.ok) {
@@ -115,6 +153,10 @@ export default function App() {
         if (configRes.ok) {
           const data = await configRes.json();
           if (data && data.heroBannerUrl) setBannerConfig(data);
+        }
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json();
+          if (data && data.length > 0) setCategories(data);
         }
       } catch (err) {
         console.error('Failed to fetch store data', err);
@@ -309,6 +351,18 @@ export default function App() {
     } catch (e) { console.error(e); }
   };
 
+  const handleUpdateCategories = async (newCategories: CategoryConfigItem[]) => {
+    setCategories(newCategories);
+    triggerToast('Categories updated successfully!');
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify(newCategories)
+      });
+    } catch (e) { console.error(e); }
+  };
+
   const handleResetData = () => {
     triggerToast('Reset is disabled. Data is loaded from the database.');
   };
@@ -398,11 +452,13 @@ export default function App() {
           products={products}
           orders={orders}
           bannerConfig={bannerConfig}
+          categories={categories}
           onAddProduct={handleAddProduct}
           onUpdateProduct={handleUpdateProduct}
           onDeleteProduct={handleDeleteProduct}
           onUpdateOrderStatus={handleUpdateOrderStatus}
           onUpdateBannerConfig={handleUpdateBannerConfig}
+          onUpdateCategories={handleUpdateCategories}
           onResetData={handleResetData}
           onExitAdmin={() => {
             setViewMode('store');
@@ -476,6 +532,7 @@ export default function App() {
 
             {/* 2. DEDICATED SHOP BY CATEGORY SECTION (right below the theme hero) */}
             <ShopByCategory
+              categories={categories}
               onSelectCategory={handleCategorySelect}
               activeCategory={catalogFilter}
             />
@@ -600,6 +657,7 @@ export default function App() {
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         items={cartItems}
+        config={bannerConfig}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={() => {

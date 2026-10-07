@@ -12,62 +12,28 @@ export interface CategoryItem {
   thumbUrl: string;
 }
 
+import { CategoryConfigItem } from '../data/storeConfig';
+
 interface ShopByCategoryProps {
+  categories: CategoryConfigItem[];
   onSelectCategory: (category: string) => void;
   activeCategory?: string;
 }
 
 export const ShopByCategory: React.FC<ShopByCategoryProps> = ({
+  categories,
   onSelectCategory,
   activeCategory = 'all',
 }) => {
   // Exactly 4 categories as requested: Packs, Match Attax Cards, Stickers, Posters
-  const categories: CategoryItem[] = [
-    {
-      id: 'packs',
-      name: 'Packs',
-      subtitle: 'Sealed Packs & Boxes',
-      itemCount: 'Match Attax, UCL, TCG',
-      badge: 'Booster Packs',
-      badgeColor: 'bg-blue-600 text-white',
-      icon: <Package className="w-4 h-4 text-blue-600" />,
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/Footenix_Store_Trading_Card_Packs.png?v=1790839312&width=600',
-    },
-    {
-      id: 'cards',
-      name: 'Match Attax Cards',
-      subtitle: 'Singles, Foils & 100 Club',
-      itemCount: 'Rookies, Legends, Gold',
-      badge: 'Rare Foils',
-      badgeColor: 'bg-amber-600 text-white',
-      icon: <Sparkles className="w-4 h-4 text-amber-600" />,
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsApp_Image_2026-09-27_at_14.25.27.jpg?v=1790499453&width=600',
-    },
-    {
-      id: 'stickers',
-      name: 'Stickers',
-      subtitle: 'Waterproof Vinyl Stickers',
-      itemCount: 'Messi, SIUUU, Crests, Anime',
-      badge: 'Vinyl Die-Cut',
-      badgeColor: 'bg-purple-600 text-white',
-      icon: <Sticker className="w-4 h-4 text-purple-600" />,
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-13at18.13.44.jpg?v=1789304371&width=600',
-    },
-    {
-      id: 'posters',
-      name: 'Posters',
-      subtitle: 'A5 Archival Wall Prints',
-      itemCount: 'Haaland, Mbappé, Ronaldo',
-      badge: 'Football Posters',
-      badgeColor: 'bg-emerald-600 text-white',
-      icon: <ImageIcon className="w-4 h-4 text-emerald-600" />,
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-29at20.10.24.jpg?v=1790698062&width=600',
-    },
-  ];
+  const enrichedCategories = categories.map((cat) => {
+    let icon = null;
+    if (cat.id === 'packs') icon = <Package className="w-4 h-4 text-blue-600" />;
+    else if (cat.id === 'cards') icon = <Sparkles className="w-4 h-4 text-amber-600" />;
+    else if (cat.id === 'stickers') icon = <Sticker className="w-4 h-4 text-purple-600" />;
+    else if (cat.id === 'posters') icon = <ImageIcon className="w-4 h-4 text-emerald-600" />;
+    return { ...cat, icon };
+  });
 
   return (
     <section className="w-full max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10 md:py-14">
@@ -87,7 +53,7 @@ export const ShopByCategory: React.FC<ShopByCategoryProps> = ({
 
       {/* Grid of exactly 4 Clean Category Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-        {categories.map((cat) => {
+        {enrichedCategories.map((cat) => {
           const isSelected = activeCategory === cat.id;
 
           return (

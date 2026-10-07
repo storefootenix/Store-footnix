@@ -1,3 +1,12 @@
+export interface CategoryConfigItem {
+  id: 'packs' | 'cards' | 'stickers' | 'posters';
+  name: string;
+  subtitle: string;
+  badge: string;
+  badgeColor: string;
+  thumbUrl: string;
+}
+
 export interface StoreBannerConfig {
   heroBannerUrl: string;
   paniniBannerUrl: string;
@@ -20,4 +29,5 @@ export interface StoreBannerConfig {
   activePromoCode: string;
   activePromoDiscountType: 'percentage' | 'fixed';
   activePromoDiscountValue: number;
+  shippingRate: number;
 }

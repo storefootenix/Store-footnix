@@ -184,6 +184,23 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
+                Standard Delivery Rate (Rs.)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.shippingRate ?? 49}
+                onChange={(e) =>
+                  setFormData({ ...formData, shippingRate: Number(e.target.value) })
+                }
+                className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none"
+              />
+              <p className="text-[11px] text-neutral-400 mt-1">
+                Default flat delivery fee applied to orders below the free delivery minimum.
+              </p>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
                 Free Delivery Minimum Order (Rs.)

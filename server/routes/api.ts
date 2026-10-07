@@ -427,4 +427,36 @@ router.post('/settings', requireAdmin, async (req, res) => {
   res.json(data[0]);
 });
 
+// Categories Configuration (Stored in Supabase Storage)
+router.get('/categories', async (req, res) => {
+  try {
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .download('categories_config.json');
+    if (error || !data) {
+      return res.status(404).json({ error: 'Categories config not found' });
+    }
+    const text = await data.text();
+    res.json(JSON.parse(text));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+router.post('/categories', requireAdmin, async (req, res) => {
+  try {
+    const jsonStr = JSON.stringify(req.body);
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload('categories_config.json', jsonStr, {
+        contentType: 'application/json',
+        upsert: true
+      });
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

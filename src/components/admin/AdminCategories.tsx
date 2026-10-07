@@ -1,63 +1,21 @@
 import React, { useState } from 'react';
 import { Product } from '../../data/products';
 import { Layers, Package, Sparkles, Image as ImageIcon, Sticker, Edit2, Save, Check } from 'lucide-react';
-
-interface CategoryConfigItem {
-  id: 'packs' | 'cards' | 'stickers' | 'posters';
-  name: string;
-  subtitle: string;
-  badge: string;
-  badgeColor: string;
-  thumbUrl: string;
-}
+import { CategoryConfigItem } from '../../data/storeConfig';
 
 interface AdminCategoriesProps {
   products: Product[];
+  categories: CategoryConfigItem[];
+  onUpdateCategories: (newCategories: CategoryConfigItem[]) => void;
   onNavigateToCategoryProducts: (cat: string) => void;
 }
 
 export const AdminCategories: React.FC<AdminCategoriesProps> = ({
   products,
+  categories,
+  onUpdateCategories,
   onNavigateToCategoryProducts,
 }) => {
-  const [categories, setCategories] = useState<CategoryConfigItem[]>([
-    {
-      id: 'packs',
-      name: 'Packs',
-      subtitle: 'Sealed Packs & Boxes',
-      badge: 'Booster Packs',
-      badgeColor: 'bg-blue-600 text-white',
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/Footenix_Store_Trading_Card_Packs.png?v=1790839312&width=600',
-    },
-    {
-      id: 'cards',
-      name: 'Match Attax Cards',
-      subtitle: 'Singles, Foils & 100 Club',
-      badge: 'Rare Foils',
-      badgeColor: 'bg-amber-600 text-white',
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsApp_Image_2026-09-27_at_14.25.27.jpg?v=1790499453&width=600',
-    },
-    {
-      id: 'stickers',
-      name: 'Stickers',
-      subtitle: 'Waterproof Vinyl Stickers',
-      badge: 'Vinyl Die-Cut',
-      badgeColor: 'bg-purple-600 text-white',
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-13at18.13.44.jpg?v=1789304371&width=600',
-    },
-    {
-      id: 'posters',
-      name: 'Posters',
-      subtitle: 'A5 Archival Wall Prints',
-      badge: 'Football Posters',
-      badgeColor: 'bg-emerald-600 text-white',
-      thumbUrl:
-        'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-29at20.10.24.jpg?v=1790698062&width=600',
-    },
-  ]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<CategoryConfigItem | null>(null);
@@ -70,7 +28,8 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
 
   const handleSaveEdit = () => {
     if (editFormData) {
-      setCategories(categories.map((c) => (c.id === editFormData.id ? editFormData : c)));
+      const newCategories = categories.map((c) => (c.id === editFormData.id ? editFormData : c));
+      onUpdateCategories(newCategories);
       setEditingId(null);
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 2000);
