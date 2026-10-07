@@ -5,22 +5,23 @@ import crypto from 'crypto';
 import multer from 'multer';
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
-  }
-});
-
+const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret'
-});
-
-const router = express.Router();
+// Helper to fetch store settings from DB
+const getSettings = async () => {
+  const { data, error } = await supabase.from('store_settings').select('*').eq('id', 1).single();
+  if (error || !data) {
+    return {
+      razorpay_key_id: '',
+      razorpay_key_secret: '',
+      delhivery_api_key: '',
+      gmail_user: '',
+      gmail_app_password: ''
+    };
+  }
+  return data;
+};
 
 // Admin Auth Middleware
 const requireAdmin = async (req: any, res: any, next: any) => {
@@ -75,6 +76,26 @@ router.post('/auth/login', async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, error: 'Auth error' });
   }
+});
+
+// Client Admin Credentials Route (Manage id=2)
+router.get('/admin/credentials', requireAdmin, async (req, res) => {
+  const { data, error } = await supabase.from('admin_users').select('username').eq('id', 2).single();
+  if (error || !data) return res.json({ username: '' });
+  res.json({ username: data.username });
+});
+
+router.put('/admin/credentials', requireAdmin, async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Missing username or password' });
+  let { data, error } = await supabase.from('admin_users').update({ username, password }).eq('id', 2).select();
+  if (!data || data.length === 0) {
+    const insertRes = await supabase.from('admin_users').insert({ id: 2, username, password }).select();
+    error = insertRes.error;
+    data = insertRes.data;
+  }
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // Image Upload
@@ -186,10 +207,12 @@ router.post('/orders', async (req, res) => {
   }
 
   // Send Automated Email via Nodemailer (Gmail)
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  const settings = await getSettings();
+  if (settings.gmail_user && settings.gmail_app_password) {
     try {
+      const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: settings.gmail_user, pass: settings.gmail_app_password } });
       await transporter.sendMail({
-        from: `"Footenix Store" <${process.env.GMAIL_USER}>`,
+        from: `"Footenix Store" <${settings.gmail_user}>`,
         to: order.customerEmail,
         subject: `Order Confirmed: #${order.id.slice(0, 8).toUpperCase()}`,
         html: `
@@ -244,11 +267,13 @@ router.post('/contact', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  const settings = await getSettings();
+  if (settings.gmail_user && settings.gmail_app_password) {
     try {
+      const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: settings.gmail_user, pass: settings.gmail_app_password } });
       await transporter.sendMail({
-        from: `"Footenix Store Contact Form" <${process.env.GMAIL_USER}>`,
-        to: process.env.GMAIL_USER, // Send to the admin's email
+        from: `"Footenix Store Contact Form" <${settings.gmail_user}>`,
+        to: settings.gmail_user, // Send to the admin's email
         replyTo: email,
         subject: `[Contact Form] ${topic} - from ${name}`,
         html: `
@@ -285,7 +310,9 @@ router.post('/payment/create-order', async (req, res) => {
       receipt: `receipt_${Date.now()}`
     };
     
-    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID !== 'rzp_test_dummy') {
+    const settings = await getSettings();
+    if (settings.razorpay_key_id && settings.razorpay_key_id !== 'rzp_test_dummy') {
+      const razorpay = new Razorpay({ key_id: settings.razorpay_key_id, key_secret: settings.razorpay_key_secret });
       const order = await razorpay.orders.create(options);
       res.json(order);
     } else {
@@ -301,10 +328,11 @@ router.post('/payment/create-order', async (req, res) => {
   }
 });
 
-router.post('/payment/verify', (req, res) => {
+router.post('/payment/verify', async (req, res) => {
   try {
+    const settings = await getSettings();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_secret';
+    const secret = settings.razorpay_key_secret || 'dummy_secret';
     
     if (razorpay_order_id.startsWith('order_mock_')) {
       return res.json({ success: true });
@@ -329,7 +357,8 @@ router.post('/payment/verify', (req, res) => {
 // Delhivery
 router.post('/shipping/create-shipment', requireAdmin, async (req, res) => {
   try {
-    const hasKey = !!process.env.DELHIVERY_API_KEY;
+    const settings = await getSettings();
+    const hasKey = !!settings.delhivery_api_key;
     const mockAwb = Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
     res.json({ 
@@ -340,6 +369,23 @@ router.post('/shipping/create-shipment', requireAdmin, async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to create Delhivery shipment' });
   }
+});
+
+// Settings API
+router.get('/settings/public', async (req, res) => {
+  const settings = await getSettings();
+  res.json({ razorpay_key_id: settings.razorpay_key_id });
+});
+
+router.get('/settings', requireAdmin, async (req, res) => {
+  const settings = await getSettings();
+  res.json(settings);
+});
+
+router.post('/settings', requireAdmin, async (req, res) => {
+  const { data, error } = await supabase.from('store_settings').update(req.body).eq('id', 1).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data[0]);
 });
 
 export default router;

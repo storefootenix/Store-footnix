@@ -511,6 +511,107 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
           </div>
         </div>
       )}
+      {/* Hidden Packing Slip Print Layout (Only visible during window.print) */}
+      {activeOrder && (
+        <div id="packing-slip-printout" className="hidden print:block absolute inset-0 bg-white p-8 font-sans">
+          {/* Header */}
+          <div className="flex justify-between items-start border-b-2 border-neutral-800 pb-6 mb-6">
+            <div>
+              <h1 className="text-4xl font-black tracking-tighter uppercase mb-1">Footenix</h1>
+              <p className="text-sm font-semibold text-neutral-500 uppercase tracking-widest">Premium Collectibles</p>
+            </div>
+            <div className="text-right">
+              <h2 className="text-2xl font-bold text-neutral-800 mb-1">PACKING SLIP</h2>
+              <p className="font-mono text-sm font-semibold text-neutral-600">Order: {activeOrder.id}</p>
+              <p className="font-mono text-sm text-neutral-500">Date: {new Date(activeOrder.createdAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+          
+          {/* Addresses */}
+          <div className="flex gap-12 mb-8 mt-12">
+            <div className="flex-1">
+              <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 border-b border-neutral-200 pb-1">Ship To</h3>
+              <p className="font-bold text-neutral-900 text-lg">{activeOrder.customerName}</p>
+              <p className="text-neutral-700 whitespace-pre-wrap text-sm mt-1">{activeOrder.shippingAddress}</p>
+              <p className="text-neutral-700 text-sm mt-0.5">{activeOrder.city} - {activeOrder.pincode}</p>
+              <p className="text-neutral-700 text-sm mt-1 font-mono">Ph: {activeOrder.customerPhone}</p>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 border-b border-neutral-200 pb-1">Ship From</h3>
+              <p className="font-bold text-neutral-900 text-lg">Footenix Store</p>
+              <p className="text-neutral-700 text-sm mt-1">Andheri West, Link Road</p>
+              <p className="text-neutral-700 text-sm mt-0.5">Mumbai - 400053</p>
+              <p className="text-neutral-700 text-sm mt-1 font-mono">storefootenix@gmail.com</p>
+            </div>
+          </div>
+          
+          {/* Items Table */}
+          <table className="w-full text-left mb-8 border-collapse mt-12">
+            <thead>
+              <tr className="border-b-2 border-neutral-800">
+                <th className="py-2 text-[11px] font-bold uppercase tracking-widest text-neutral-500">Item Description</th>
+                <th className="py-2 text-[11px] font-bold uppercase tracking-widest text-neutral-500 text-center">Qty</th>
+                <th className="py-2 text-[11px] font-bold uppercase tracking-widest text-neutral-500 text-right">Price</th>
+                <th className="py-2 text-[11px] font-bold uppercase tracking-widest text-neutral-500 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {activeOrder.items.map((item, idx) => (
+                <tr key={idx} className="border-b border-neutral-200">
+                  <td className="py-4">
+                    <p className="font-bold text-neutral-900 text-base">{item.name}</p>
+                    <p className="text-[10px] font-mono text-neutral-500 uppercase mt-1">Category: {item.category}</p>
+                  </td>
+                  <td className="py-4 text-center font-mono text-base">{item.quantity}</td>
+                  <td className="py-4 text-right font-mono text-neutral-600">Rs. {item.price.toFixed(2)}</td>
+                  <td className="py-4 text-right font-mono font-bold text-base">Rs. {(item.price * item.quantity).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Totals & Notes */}
+          <div className="flex justify-between items-start mt-12">
+            <div className="p-5 border-2 border-neutral-200 rounded-lg w-1/2">
+              <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Payment Information</h3>
+              <p className="text-base font-bold uppercase">{activeOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Paid Online (Razorpay)'}</p>
+              
+              {activeOrder.paymentMethod === 'cod' && (
+                <p className="text-sm font-semibold text-red-600 mt-2 border border-red-200 bg-red-50 p-2 rounded">
+                  Collect Rs. {activeOrder.total.toFixed(2)} upon delivery.
+                </p>
+              )}
+              
+              {activeOrder.trackingNumber && (
+                <div className="mt-4 pt-3 border-t border-neutral-200">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">AWB Tracking Number:</span> 
+                  <p className="font-mono font-bold text-lg mt-1">{activeOrder.trackingNumber}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="w-1/3 text-sm">
+              <div className="flex justify-between py-2 border-b border-neutral-200">
+                <span className="text-neutral-500 font-semibold">Subtotal</span>
+                <span className="font-mono">Rs. {activeOrder.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-neutral-200">
+                <span className="text-neutral-500 font-semibold">Shipping</span>
+                <span className="font-mono">{activeOrder.shipping === 0 ? 'FREE' : `Rs. ${activeOrder.shipping.toFixed(2)}`}</span>
+              </div>
+              <div className="flex justify-between py-3 text-xl font-bold border-b-2 border-neutral-900 mt-2">
+                <span>Total</span>
+                <span className="font-mono">Rs. {activeOrder.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-20 text-center border-t-2 border-neutral-100 pt-8">
+            <p className="font-bold tracking-widest uppercase text-sm text-neutral-800">Thank you for shopping with Footenix!</p>
+            <p className="text-xs text-neutral-500 mt-2">If you have any questions about your order, please contact us on WhatsApp.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

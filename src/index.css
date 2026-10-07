@@ -111,3 +111,23 @@
   );
   background-size: 200% 200%;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #packing-slip-printout, #packing-slip-printout * {
+    visibility: visible;
+  }
+  #packing-slip-printout {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+    background: white;
+  }
+  @page {
+    margin: 0.5cm;
+  }
+}

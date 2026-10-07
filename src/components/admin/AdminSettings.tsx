@@ -21,6 +21,101 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 }) => {
   const [formData, setFormData] = useState<StoreBannerConfig>(config);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  
+  const defaultKeys = { 
+    razorpay_key_id: '', 
+    razorpay_key_secret: '', 
+    delhivery_api_key: '', 
+    gmail_user: '', 
+    gmail_app_password: '' 
+  };
+  const [apiKeys, setApiKeys] = useState(defaultKeys);
+  const defaultCreds = { username: '', password: '' };
+  const [creds, setCreds] = useState(defaultCreds);
+  const [initialCreds, setInitialCreds] = useState(defaultCreds);
+  const [credsSaved, setCredsSaved] = useState(false);
+  const [initialApiKeys, setInitialApiKeys] = useState(defaultKeys);
+  const [keysSaved, setKeysSaved] = useState(false);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('footenixAdminToken');
+    if (token) {
+      fetch('/api/settings', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error && data) {
+          const fetchedKeys = {
+            razorpay_key_id: data.razorpay_key_id || '',
+            razorpay_key_secret: data.razorpay_key_secret || '',
+            delhivery_api_key: data.delhivery_api_key || '',
+            gmail_user: data.gmail_user || '',
+            gmail_app_password: data.gmail_app_password || ''
+          };
+          setApiKeys(fetchedKeys);
+          setInitialApiKeys(fetchedKeys);
+        }
+      });
+    }
+  }, []);
+
+  const handleSaveCreds = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('footenixAdminToken');
+    if (token) {
+      try {
+        const res = await fetch('/api/admin/credentials', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(creds)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert('Failed to save credentials: ' + (err.error || 'Server error'));
+          return;
+        }
+        setInitialCreds({...creds});
+        setCredsSaved(true);
+        alert('✅ SUCCESS: Admin Credentials updated!');
+        setTimeout(() => setCredsSaved(false), 3000);
+      } catch (err) {
+        alert('Network error while saving credentials.');
+      }
+    }
+  };
+
+  const handleSaveApiKeys = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('footenixAdminToken');
+    if (token) {
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(apiKeys)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert('Failed to save keys: ' + (err.error || 'Server error'));
+          return;
+        }
+        
+        setInitialApiKeys({...apiKeys});
+        setKeysSaved(true);
+        alert('✅ SUCCESS: API Keys have been securely saved to the database!');
+        setTimeout(() => setKeysSaved(false), 3000);
+      } catch (err) {
+        alert('Network error while saving keys.');
+      }
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,6 +399,95 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           >
             <Save className="w-4 h-4" />
             <span>Save Store Settings</span>
+          </button>
+        </div>
+      </form>
+
+      {/* Secret API Keys (Database) */}
+      <form onSubmit={handleSaveApiKeys} className="p-5 bg-white rounded-lg border border-neutral-200 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#171923]">
+          <ShieldCheck className="w-4 h-4 text-[#245bff]" />
+          <span>API Integrations & Keys</span>
+        </div>
+        
+        <p className="text-[11px] text-neutral-500">
+          These keys are stored securely in the database and applied instantly without needing to redeploy.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">Razorpay Key ID</label>
+            <input type="text" value={apiKeys.razorpay_key_id} onChange={e => setApiKeys({...apiKeys, razorpay_key_id: e.target.value})} className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none" placeholder="rzp_test_..." />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">Razorpay Key Secret</label>
+            <input type="password" value={apiKeys.razorpay_key_secret} onChange={e => setApiKeys({...apiKeys, razorpay_key_secret: e.target.value})} className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none" placeholder="••••••••••••••••" />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4 pt-2">
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">Delhivery API Token</label>
+            <input type="password" value={apiKeys.delhivery_api_key} onChange={e => setApiKeys({...apiKeys, delhivery_api_key: e.target.value})} className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none" placeholder="••••••••••••••••" />
+            <p className="text-[10px] text-neutral-400 mt-1">Delhivery will generate mock tracking numbers if this is blank.</p>
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+          {keysSaved ? (
+            <div className="text-emerald-600 text-xs font-bold flex items-center gap-1.5"><Check className="w-4 h-4"/> Saved</div>
+          ) : <div/>}
+          <button 
+            type="submit" 
+            disabled={JSON.stringify(apiKeys) === JSON.stringify(initialApiKeys)}
+            className={`px-6 py-2 font-semibold rounded text-xs shadow-xs flex items-center gap-2 transition-colors ${
+              JSON.stringify(apiKeys) === JSON.stringify(initialApiKeys) 
+                ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed' 
+                : 'bg-neutral-800 hover:bg-black text-white cursor-pointer'
+            }`}
+          >
+            <Save className="w-4 h-4" />
+            <span>Save API Keys</span>
+          </button>
+        </div>
+      </form>
+      {/* Client Admin Credentials (Database) */}
+      <form onSubmit={handleSaveCreds} className="p-5 bg-white rounded-lg border border-neutral-200 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#171923]">
+          <ShieldCheck className="w-4 h-4 text-[#245bff]" />
+          <span>Admin Login Credentials</span>
+        </div>
+        
+        <p className="text-[11px] text-neutral-500">
+          Set the username and password for this admin panel. This updates the primary store account, leaving the developer backup account intact.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">Username</label>
+            <input type="text" value={creds.username} onChange={e => setCreds({...creds, username: e.target.value})} className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none" placeholder="admin" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">New Password</label>
+            <input type="password" value={creds.password} onChange={e => setCreds({...creds, password: e.target.value})} className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none" placeholder="••••••••••••••••" />
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+          {credsSaved ? (
+            <div className="text-emerald-600 text-xs font-bold flex items-center gap-1.5"><Check className="w-4 h-4"/> Saved</div>
+          ) : <div/>}
+          <button 
+            type="submit" 
+            disabled={JSON.stringify(creds) === JSON.stringify(initialCreds)}
+            className={`px-6 py-2 font-semibold rounded text-xs shadow-xs flex items-center gap-2 transition-colors ${
+              JSON.stringify(creds) === JSON.stringify(initialCreds) 
+                ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed' 
+                : 'bg-neutral-800 hover:bg-black text-white cursor-pointer'
+            }`}
+          >
+            <Save className="w-4 h-4" />
+            <span>Update Login</span>
           </button>
         </div>
       </form>

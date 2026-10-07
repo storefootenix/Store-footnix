@@ -130,8 +130,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         });
         const orderData = await orderRes.json();
         
+        // Fetch dynamic Razorpay Key ID from DB
+        const settingsRes = await fetch('/api/settings/public');
+        const { razorpay_key_id } = await settingsRes.json();
+        
         const options = {
-          key: 'rzp_test_dummy', // Will be ignored if mock, or should be dynamically fetched if real
+          key: razorpay_key_id || 'rzp_test_dummy',
           amount: orderData.amount,
           currency: orderData.currency,
           name: config.storeName || 'Footenix Store',
