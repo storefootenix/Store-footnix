@@ -77,7 +77,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     });
   };
 
-  const proceedWithOrderCreation = (newOrderId: string, paymentMethod: string, status: string) => {
+  const proceedWithOrderCreation = (newOrderId: string, paymentMethod: Order['paymentMethod'], status: string) => {
     setOrderId(newOrderId);
     setStep('success');
 
@@ -310,6 +310,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="text"
                       required
+                      minLength={2}
+                      maxLength={50}
+                      pattern="^[A-Za-z\s\.\-']+$"
+                      title="Name should only contain letters, spaces, hyphens, and apostrophes"
                       autoComplete="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -321,10 +325,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="tel"
                       required
-                      inputMode="tel"
+                      minLength={10}
+                      maxLength={10}
+                      pattern="^[0-9]{10}$"
+                      title="Please enter a valid 10-digit mobile number"
+                      inputMode="numeric"
                       autoComplete="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setFormData({ ...formData, phone: val });
+                      }}
                       className="w-full p-2.5 border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none text-base sm:text-xs"
                     />
                   </div>
@@ -333,6 +344,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="email"
                       required
+                      maxLength={100}
                       inputMode="email"
                       autoComplete="email"
                       value={formData.email}
@@ -345,6 +357,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="text"
                       required
+                      minLength={5}
+                      maxLength={150}
                       autoComplete="street-address"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -357,6 +371,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="text"
                       required
+                      minLength={2}
+                      maxLength={50}
+                      pattern="^[A-Za-z\s]+$"
+                      title="City name should only contain letters and spaces"
                       autoComplete="address-level2"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -368,12 +386,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <input
                       type="text"
                       required
-                      inputMode="numeric"
-                      pattern="[0-9]*"
+                      minLength={6}
                       maxLength={6}
+                      pattern="^[1-9][0-9]{5}$"
+                      title="Please enter a valid 6-digit Indian PIN code"
+                      inputMode="numeric"
                       autoComplete="postal-code"
                       value={formData.pincode}
-                      onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setFormData({ ...formData, pincode: val });
+                      }}
                       className="w-full p-2.5 border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none text-base sm:text-xs"
                     />
                   </div>

@@ -23,6 +23,55 @@ const getSettings = async () => {
   return data;
 };
 
+// Helper for Delhivery API
+const createDelhiveryShipment = async (orderData: any, settings: any) => {
+  if (!settings.delhivery_api_key) {
+    return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+  }
+
+  const isCOD = orderData.paymentMethod === 'cod';
+  const paymentMode = isCOD ? 'COD' : 'Pre-paid';
+  const codAmount = isCOD ? orderData.total : 0;
+
+  const payload = {
+    format: 'json',
+    data: {
+      shipments: [{
+        name: orderData.customerName,
+        add: orderData.shippingAddress,
+        pin: orderData.pincode,
+        city: orderData.city,
+        state: '',
+        country: 'India',
+        phone: orderData.customerPhone,
+        order: orderData.id,
+        payment_mode: paymentMode,
+        cod_amount: codAmount,
+        products_desc: orderData.items.map((i: any) => i.name).join(', '),
+        total_amount: orderData.total,
+        seller_name: 'Footenix Store',
+        quantity: orderData.items.reduce((acc: any, item: any) => acc + item.quantity, 0),
+        weight: 500
+      }]
+    }
+  };
+
+  const res = await fetch('https://track.delhivery.com/api/cmu/create.json', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Token ' + settings.delhivery_api_key
+    },
+    body: 'format=json&data=' + encodeURIComponent(JSON.stringify(payload.data))
+  });
+  const result = await res.json();
+  if (result.packages && result.packages.length > 0) {
+    return result.packages[0].waybill;
+  } else {
+    throw new Error('Delhivery API error: ' + JSON.stringify(result));
+  }
+};
+
 // Admin Auth Middleware
 const requireAdmin = async (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
@@ -164,49 +213,9 @@ router.post('/orders', async (req, res) => {
   const settings = await getSettings();
   if (orderData.paymentMethod === 'razorpay' && !orderData.trackingNumber) {
     try {
-      if (settings.delhivery_api_key) {
-        const payload = {
-          format: 'json',
-          data: {
-            shipments: [{
-              name: orderData.customerName,
-              add: orderData.shippingAddress,
-              pin: orderData.pincode,
-              city: orderData.city,
-              state: '',
-              country: 'India',
-              phone: orderData.customerPhone,
-              order: orderData.id,
-              payment_mode: 'Pre-paid',
-              products_desc: orderData.items.map((i) => i.name).join(', '),
-              total_amount: orderData.total,
-              seller_name: 'Footenix Store',
-              quantity: orderData.items.reduce((acc, item) => acc + item.quantity, 0)
-            }],
-            pickup_location: { name: 'Footenix Store', add: 'Main Warehouse', city: 'Delhi', pin: '110001', country: 'India' }
-          }
-        };
-
-        const res = await fetch('https://track.delhivery.com/api/cmu/create.json', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Token ' + settings.delhivery_api_key
-          },
-          body: 'format=json&data=' + encodeURIComponent(JSON.stringify(payload.data))
-        });
-        const result = await res.json();
-        if (result.packages && result.packages.length > 0) {
-          orderData.trackingNumber = result.packages[0].waybill;
-          orderData.status = 'processing';
-        } else {
-          throw new Error('Delhivery API error: ' + JSON.stringify(result));
-        }
-      } else {
-        const mockAwb = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-        orderData.trackingNumber = mockAwb;
-        orderData.status = 'processing';
-      }
+      const awb = await createDelhiveryShipment(orderData, settings);
+      orderData.trackingNumber = awb;
+      orderData.status = 'processing';
     } catch (err) {
       console.error('Failed to create Delhivery shipment:', err);
     }
@@ -396,17 +405,26 @@ router.post('/payment/verify', async (req, res) => {
 // Delhivery
 router.post('/shipping/create-shipment', requireAdmin, async (req, res) => {
   try {
+    const { orderId } = req.body;
+    if (!orderId) return res.status(400).json({ error: 'Missing orderId' });
+
+    const { data: orderData, error } = await supabase.from('orders').select('*').eq('id', orderId).single();
+    if (error || !orderData) throw new Error('Order not found');
+
     const settings = await getSettings();
-    const hasKey = !!settings.delhivery_api_key;
-    const mockAwb = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    const awb = await createDelhiveryShipment(orderData, settings);
     
+    // Update tracking number in DB
+    await supabase.from('orders').update({ trackingNumber: awb, status: 'shipped' }).eq('id', orderId);
+
     res.json({ 
       success: true, 
-      awb: mockAwb,
-      message: hasKey ? 'Sent to Delhivery API' : 'Mock Mode (No API Key)' 
+      awb,
+      message: settings.delhivery_api_key ? 'Sent to Delhivery API' : 'Mock Mode (No API Key)' 
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create Delhivery shipment' });
+  } catch (error: any) {
+    console.error('Delhivery Shipment Error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create Delhivery shipment' });
   }
 });
 

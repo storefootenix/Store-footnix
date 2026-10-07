@@ -19,7 +19,7 @@ export interface Order {
   subtotal: number;
   shipping: number;
   total: number;
-  paymentMethod: 'cod' | 'upi' | 'card';
+  paymentMethod: 'cod' | 'razorpay' | 'upi' | 'card';
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   trackingNumber?: string;
