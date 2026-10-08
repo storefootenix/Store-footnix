@@ -13,6 +13,7 @@ interface NavbarProps {
   config: StoreBannerConfig;
   activeTab: string;
   onNavigate: (tab: 'home' | 'catalog' | 'contact', category?: string) => void;
+  categories?: any[];
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -25,6 +26,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   config,
   activeTab,
   onNavigate,
+  categories = [],
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -197,40 +199,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <ArrowRight className="w-4 h-4 text-neutral-400" />
                 </button>
 
-                {/* 4 Core Categories Sub-list */}
-                <div className="pt-2 pb-1 px-3">
-                  <span className="text-[10px] font-mono tracking-widest uppercase font-bold text-neutral-400">
-                    SHOP BY 4 CATEGORIES
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleMobileNav('catalog', 'packs')}
-                  className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-                >
-                  <span>Booster Packs &amp; Boxes</span>
-                </button>
-
-                <button
-                  onClick={() => handleMobileNav('catalog', 'cards')}
-                  className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-                >
-                  <span>Match Attax Cards</span>
-                </button>
-
-                <button
-                  onClick={() => handleMobileNav('catalog', 'stickers')}
-                  className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-                >
-                  <span>Topps 24/25</span>
-                </button>
-
-                <button
-                  onClick={() => handleMobileNav('catalog', 'posters')}
-                  className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-                >
-                  <span>Football A5 Wall Posters</span>
-                </button>
+                {/* Dynamic Categories Sub-list */}
+                {categories.length > 0 && (
+                  <div className="pt-2 pb-1 px-3">
+                    <span className="text-[10px] font-mono tracking-widest uppercase font-bold text-neutral-400">
+                      SHOP BY CATEGORIES
+                    </span>
+                  </div>
+                )}
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleMobileNav('catalog', cat.id)}
+                    className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  >
+                    <span>{cat.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
 

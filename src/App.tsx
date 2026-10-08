@@ -513,6 +513,7 @@ export default function App() {
         }}
         config={bannerConfig}
         activeTab={activeTab}
+        categories={categories}
         onNavigate={(tab) => {
           if (tab === 'contact') {
             handleOpenContact();
