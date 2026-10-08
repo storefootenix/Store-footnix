@@ -8,6 +8,7 @@ interface SearchModalProps {
   onClose: () => void;
   onSelectProduct: (product: Product) => void;
   products?: Product[];
+  categories?: any[];
 }
 
 export const SearchModal: React.FC<SearchModalProps> = ({
@@ -15,6 +16,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onClose,
   onSelectProduct,
   products = [],
+  categories = [],
 }) => {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -85,21 +87,17 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
           {/* Category Tabs */}
           <div className="px-3 sm:px-4 py-2.5 bg-neutral-50 border-b border-neutral-200 flex items-center gap-1.5 sm:gap-2 overflow-x-auto text-xs shrink-0 scrollbar-none">
-            {['all', 'packs', 'cards', 'panini', 'stickers', 'posters'].map((cat) => (
+            {[{ id: 'all', name: 'All Items' }, ...categories].map((cat) => (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors active:scale-95 cursor-pointer ${
-                  selectedCategory === cat
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors active:scale-95 cursor-pointer ${
+                  selectedCategory === cat.id
                     ? 'bg-black text-white shadow-xs'
                     : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100'
                 }`}
               >
-                {cat === 'all'
-                  ? 'All Items'
-                  : cat === 'cards'
-                  ? 'Match Attax Cards'
-                  : cat}
+                {cat.name}
               </button>
             ))}
           </div>

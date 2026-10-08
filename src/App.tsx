@@ -668,6 +668,7 @@ export default function App() {
         onClose={() => setIsSearchOpen(false)}
         onSelectProduct={(p) => setSelectedProduct(p)}
         products={products}
+        categories={categories}
       />
 
       {/* Order Checkout Modal */}
