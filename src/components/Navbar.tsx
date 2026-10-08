@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleMobileNav('catalog', 'stickers')}
                   className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                 >
-                  <span>Waterproof Stickers</span>
+                  <span>Topps 24/25</span>
                 </button>
 
                 <button

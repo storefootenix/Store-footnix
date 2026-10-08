@@ -171,10 +171,10 @@ export const AdminBanners: React.FC<AdminBannersProps> = ({ config, onUpdateConf
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#171923]">
-                4. Stickers Section Banner
+                4. Topps 24/25 Section Banner
               </h3>
               <p className="text-xs text-neutral-500">
-                Upload or paste a banner image for the Waterproof Vinyl Stickers collection.
+                Upload or paste a banner image for the Topps 24/25 Collections collection.
               </p>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
@@ -190,14 +190,14 @@ export const AdminBanners: React.FC<AdminBannersProps> = ({ config, onUpdateConf
 
           <div>
             <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Stickers Banner Image URL
+              Topps 24/25 Banner Image URL
             </label>
             <input
               type="url"
               value={formData.stickersBannerUrl}
               onChange={(e) => setFormData({ ...formData, stickersBannerUrl: e.target.value })}
               className="w-full px-3 py-2 text-xs border border-neutral-300 rounded font-mono focus:border-[#245bff] focus:outline-none"
-              placeholder="Paste your stickers collection banner URL here..."
+              placeholder="Paste your Topps 24/25 collection banner URL here..."
             />
           </div>
 
@@ -205,7 +205,7 @@ export const AdminBanners: React.FC<AdminBannersProps> = ({ config, onUpdateConf
             <div className="rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100 aspect-[16/6] relative">
               <img
                 src={formData.stickersBannerUrl}
-                alt="Stickers Banner Preview"
+                alt="Topps 24/25 Banner Preview"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />

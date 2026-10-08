@@ -39,6 +39,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
   const categoryCounts = {
     packs: products.filter((p) => p.category === 'packs').length,
     cards: products.filter((p) => p.category === 'cards').length,
+    panini: products.filter((p) => p.category === 'panini').length,
     stickers: products.filter((p) => p.category === 'stickers').length,
     posters: products.filter((p) => p.category === 'posters').length,
   };
@@ -160,7 +161,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#171923]">
-                Inventory by Category (4 Main Lines)
+                Inventory by Category (5 Main Lines)
               </h3>
               <p className="text-xs text-neutral-500">Products live on the storefront</p>
             </div>
@@ -172,7 +173,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
               <span className="text-[11px] font-mono uppercase text-neutral-500 block">Packs</span>
               <span className="text-xl font-semibold text-[#171923] mt-1 block">
@@ -190,11 +191,19 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
             </div>
 
             <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
-              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Stickers</span>
+              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Topps 24/25</span>
               <span className="text-xl font-semibold text-[#171923] mt-1 block">
                 {categoryCounts.stickers} Items
               </span>
               <span className="text-[10px] text-purple-600 font-medium">Vinyl die-cuts</span>
+            </div>
+
+            <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
+              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Panini Cards</span>
+              <span className="text-xl font-semibold text-[#171923] mt-1 block">
+                {categoryCounts.panini} Items
+              </span>
+              <span className="text-[10px] text-red-600 font-medium">Authentic collections</span>
             </div>
 
             <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">

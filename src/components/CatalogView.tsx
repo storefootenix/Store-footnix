@@ -25,7 +25,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
     { id: 'all', label: 'All Collectibles' },
     { id: 'packs', label: 'Packs' },
     { id: 'cards', label: 'Match Attax Cards' },
-    { id: 'stickers', label: 'Stickers' },
+    { id: 'stickers', label: 'Topps 24/25' },
     { id: 'posters', label: 'Posters' },
   ];
 

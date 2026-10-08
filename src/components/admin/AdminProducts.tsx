@@ -33,14 +33,14 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
   onCloseAddModal,
 }) => {
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'packs' | 'cards' | 'stickers' | 'posters'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'packs' | 'cards' | 'panini' | 'stickers' | 'posters'>('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLocalAddOpen, setIsLocalAddOpen] = useState(false);
 
   // Form state for creating/editing product
   const initialFormData = {
     name: '',
-    category: 'cards' as 'packs' | 'cards' | 'stickers' | 'posters',
+    category: 'cards' as 'packs' | 'cards' | 'panini' | 'stickers' | 'posters',
     price: 199,
     originalPrice: 249,
     stock: 10,
@@ -230,7 +230,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
         {/* 4 Category Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto text-xs pb-1 md:pb-0 scrollbar-none">
           <span className="text-[11px] font-mono text-neutral-400 uppercase mr-1">Category:</span>
-          {(['all', 'packs', 'cards', 'stickers', 'posters'] as const).map((cat) => (
+          {(['all', 'packs', 'cards', 'panini', 'stickers', 'posters'] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
@@ -276,6 +276,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                 const categoryBadge = {
                   packs: 'bg-blue-50 text-blue-700 border-blue-200',
                   cards: 'bg-amber-50 text-amber-700 border-amber-200',
+                  panini: 'bg-red-50 text-red-700 border-red-200',
                   stickers: 'bg-purple-50 text-purple-700 border-purple-200',
                   posters: 'bg-emerald-50 text-emerald-700 border-emerald-200',
                 }[p.category];
@@ -420,7 +421,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                     >
                       <option value="packs">Packs (Booster Packs &amp; Boxes)</option>
                       <option value="cards">Match Attax Cards (Singles &amp; Foils)</option>
-                      <option value="stickers">Stickers (Waterproof Vinyl)</option>
+                      <option value="stickers">Topps 24/25 (Waterproof Vinyl)</option>
                       <option value="posters">Posters (Football A5 Wall Prints)</option>
                     </select>
                   </div>

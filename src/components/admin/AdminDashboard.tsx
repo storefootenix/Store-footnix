@@ -77,7 +77,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       badgeColor: 'bg-amber-500 text-white',
     },
     { id: 'banners' as const, label: 'Banners & Hero', icon: ImageIcon },
-    { id: 'categories' as const, label: '4 Categories', icon: Layers },
+    { id: 'categories' as const, label: '5 Categories', icon: Layers },
     { id: 'settings' as const, label: 'Store Settings', icon: Settings },
   ];
 

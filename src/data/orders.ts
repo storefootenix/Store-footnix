@@ -4,7 +4,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   imageUrl?: string;
-  category: 'packs' | 'cards' | 'posters' | 'stickers';
+  category: 'packs' | 'cards' | 'panini' | 'posters' | 'stickers';
 }
 
 export interface Order {

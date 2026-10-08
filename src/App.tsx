@@ -45,9 +45,17 @@ const DEFAULT_CATEGORIES: CategoryConfigItem[] = [
     thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsApp_Image_2026-09-27_at_14.25.27.jpg?v=1790499453&width=600',
   },
   {
+    id: 'panini',
+    name: 'Panini Cards',
+    subtitle: 'Authentic Collections',
+    badge: 'Trending',
+    badgeColor: 'bg-red-600 text-white',
+    thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/Footenix_Store_Trading_Card_Packs.png?v=1790839312&width=600',
+  },
+  {
     id: 'stickers',
-    name: 'Stickers',
-    subtitle: 'Waterproof Vinyl Stickers',
+    name: 'Topps 24/25',
+    subtitle: 'Topps 24/25 Collections',
     badge: 'Vinyl Die-Cut',
     badgeColor: 'bg-purple-600 text-white',
     thumbUrl: 'https://footenix-store-2.myshopify.com/cdn/shop/files/WhatsAppImage2026-09-13at18.13.44.jpg?v=1789304371&width=600',
@@ -561,7 +569,7 @@ export default function App() {
               </section>
             )}
 
-            {/* Optional Stickers Banner (Only shown if toggled ON in Admin) */}
+            {/* Optional Topps 24/25 Banner (Only shown if toggled ON in Admin) */}
             {bannerConfig.showStickersBanner && bannerConfig.stickersBannerUrl && (
               <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div

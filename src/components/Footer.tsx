@@ -130,7 +130,7 @@ export const Footer: React.FC<FooterProps> = ({ config, onNavigateSection, onOpe
                 </li>
                 <li>
                   <button onClick={() => onNavigateSection('stickers')} className="hover:text-white transition-colors">
-                    Waterproof Vinyl Stickers
+                    Topps 24/25 Collections
                   </button>
                 </li>
                 <li>

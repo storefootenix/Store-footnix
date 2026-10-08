@@ -42,10 +42,10 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif-store font-semibold text-[#171923]">
-            Category Settings (4 Main Lines)
+            Category Settings (5 Main Lines)
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">
-            Configure the 4 active categories shown in the "Shop by Category" storefront section.
+            Configure the 5 active categories shown in the "Shop by Category" storefront section.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
         )}
       </div>
 
-      {/* Grid of the 4 Categories */}
+      {/* Grid of the 5 Categories */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {categories.map((cat) => {
           const itemCount = products.filter((p) => p.category === cat.id).length;

@@ -42,7 +42,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
     'Messi',
     'Glue Dots',
     'A5 Posters',
-    'Waterproof Stickers',
+    'Topps 24/25',
   ];
 
   return (
@@ -85,7 +85,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
           {/* Category Tabs */}
           <div className="px-3 sm:px-4 py-2.5 bg-neutral-50 border-b border-neutral-200 flex items-center gap-1.5 sm:gap-2 overflow-x-auto text-xs shrink-0 scrollbar-none">
-            {['all', 'packs', 'cards', 'stickers', 'posters'].map((cat) => (
+            {['all', 'packs', 'cards', 'panini', 'stickers', 'posters'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}

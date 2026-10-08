@@ -25,11 +25,12 @@ export const ShopByCategory: React.FC<ShopByCategoryProps> = ({
   onSelectCategory,
   activeCategory = 'all',
 }) => {
-  // Exactly 4 categories as requested: Packs, Match Attax Cards, Stickers, Posters
+  // Exactly 5 categories as requested
   const enrichedCategories = categories.map((cat) => {
     let icon = null;
     if (cat.id === 'packs') icon = <Package className="w-4 h-4 text-blue-600" />;
     else if (cat.id === 'cards') icon = <Sparkles className="w-4 h-4 text-amber-600" />;
+    else if (cat.id === 'panini') icon = <Sparkles className="w-4 h-4 text-red-600" />;
     else if (cat.id === 'stickers') icon = <Sticker className="w-4 h-4 text-purple-600" />;
     else if (cat.id === 'posters') icon = <ImageIcon className="w-4 h-4 text-emerald-600" />;
     return { ...cat, icon };
@@ -47,12 +48,12 @@ export const ShopByCategory: React.FC<ShopByCategoryProps> = ({
           Shop by Category
         </h2>
         <p className="text-[11px] sm:text-sm text-neutral-500 mt-1 sm:mt-2 font-light max-w-md mx-auto">
-          Find authentic Match Attax packs, rare holographic singles, archival football posters, and waterproof stickers.
+          Find authentic Match Attax packs, rare holographic singles, archival football posters, and Topps 24/25.
         </p>
       </div>
 
-      {/* Grid of exactly 4 Clean Category Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+      {/* Grid of exactly 5 Clean Category Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-6">
         {enrichedCategories.map((cat) => {
           const isSelected = activeCategory === cat.id;
 
