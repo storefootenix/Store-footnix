@@ -11,7 +11,7 @@ interface NavbarProps {
   onOpenContact: () => void;
   onOpenAccount: () => void;
   config: StoreBannerConfig;
-  activeTab: 'home' | 'catalog' | 'contact';
+  activeTab: string;
   onNavigate: (tab: 'home' | 'catalog' | 'contact', category?: string) => void;
 }
 

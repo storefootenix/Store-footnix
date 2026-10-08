@@ -1,5 +1,5 @@
 export interface CategoryConfigItem {
-  id: 'packs' | 'cards' | 'panini' | 'stickers' | 'posters';
+  id: string;
   name: string;
   subtitle: string;
   badge: string;

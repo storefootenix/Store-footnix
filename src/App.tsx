@@ -72,7 +72,7 @@ const DEFAULT_CATEGORIES: CategoryConfigItem[] = [
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'store' | 'admin'>('store');
-  const [activeTab, setActiveTab] = useState<'home' | 'catalog' | 'contact' | 'account' | 'legal'>('home');
+  const [activeTab, setActiveTab] = useState<string>('home');
   const [legalTab, setLegalTab] = useState<'privacy' | 'terms' | 'refund' | 'shipping'>('privacy');
   const [catalogFilter, setCatalogFilter] = useState<string>('all');
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -378,9 +378,7 @@ export default function App() {
     triggerToast('Reset is disabled. Data is loaded from the database.');
   };
 
-  // Categorized products for homepage sections (live from products state)
-  const posterProducts = products.filter((p) => p.category === 'posters');
-  const stickerProducts = products.filter((p) => p.category === 'stickers');
+
 
   const handleShopMatchAttax = () => {
     setCatalogFilter('packs');
@@ -409,14 +407,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleShopAllPosters = () => {
-    setCatalogFilter('posters');
-    setActiveTab('catalog');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleShopAllStickers = () => {
-    setCatalogFilter('stickers');
+  const handleShopAll = (cat: string) => {
+    setCatalogFilter(cat);
     setActiveTab('catalog');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -573,7 +565,7 @@ export default function App() {
             {bannerConfig.showStickersBanner && bannerConfig.stickersBannerUrl && (
               <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div
-                  onClick={handleShopAllStickers}
+                  onClick={() => handleShopAll('stickers')}
                   className="w-full rounded-xl overflow-hidden border border-neutral-200 shadow-md cursor-pointer aspect-[16/5] bg-neutral-900 group"
                 >
                   <img
@@ -586,44 +578,28 @@ export default function App() {
               </section>
             )}
 
-            {/* 3. "FOOTBALL POSTERS" Section with SHOP ALL button */}
-            <ProductSection
-              id="football-posters"
-              title="FOOTBALL POSTERS"
-              products={posterProducts}
-              onShopAll={handleShopAllPosters}
-              onQuickView={(p) => setSelectedProduct(p)}
-              onAddToCart={(p) => handleAddToCart(p, 1)}
-              addedIds={recentlyAddedIds}
-            />
+                        {/* Dynamic Category Sections */}
+            {categories.map((cat) => {
+              const catProducts = products.filter(p => p.category === cat.id);
+              if (catProducts.length === 0) return null;
+              
+              return (
+                <ProductSection
+                  key={cat.id}
+                  id={`${cat.id}-section`}
+                  title={cat.name.toUpperCase()}
+                  products={catProducts}
+                  onShopAll={() => handleShopAll(cat.id)}
+                  onQuickView={(p) => setSelectedProduct(p)}
+                  onAddToCart={(p) => handleAddToCart(p, 1)}
+                  addedIds={recentlyAddedIds}
+                />
+              );
+            })}
 
-            {/* Optional Posters Banner (Only shown if toggled ON in Admin) */}
-            {bannerConfig.showPostersBanner && bannerConfig.postersBannerUrl && (
-              <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div
-                  onClick={handleShopAllPosters}
-                  className="w-full rounded-xl overflow-hidden border border-neutral-200 shadow-md cursor-pointer aspect-[16/5] bg-neutral-900 group"
-                >
-                  <img
-                    src={bannerConfig.postersBannerUrl}
-                    alt="Posters Collection Banner"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
-                  />
-                </div>
-              </section>
-            )}
+            
 
-            {/* 4. "FOOTBALL & ANIME STICKERS" Section with SHOP ALL button */}
-            <ProductSection
-              id="football-stickers"
-              title="FOOTBALL & ANIME STICKERS"
-              products={stickerProducts}
-              onShopAll={handleShopAllStickers}
-              onQuickView={(p) => setSelectedProduct(p)}
-              onAddToCart={(p) => handleAddToCart(p, 1)}
-              addedIds={recentlyAddedIds}
-            />
+            
           </>
         ) : activeTab === 'account' ? (
           <UserDashboard session={session} />
@@ -640,6 +616,7 @@ export default function App() {
           <CatalogView
             products={products}
             initialCategory={catalogFilter}
+            categories={categories}
             onQuickView={(p) => setSelectedProduct(p)}
             onAddToCart={(p) => handleAddToCart(p, 1)}
             addedIds={recentlyAddedIds}

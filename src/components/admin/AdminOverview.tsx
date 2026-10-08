@@ -17,6 +17,7 @@ import {
 interface AdminOverviewProps {
   products: Product[];
   orders: Order[];
+  categories: any[];
   onNavigateTab: (tab: 'products' | 'orders' | 'banners' | 'categories' | 'settings') => void;
   onOpenAddProduct: () => void;
   onSelectOrder: (order: Order) => void;
@@ -25,6 +26,7 @@ interface AdminOverviewProps {
 export const AdminOverview: React.FC<AdminOverviewProps> = ({
   products,
   orders,
+  categories,
   onNavigateTab,
   onOpenAddProduct,
   onSelectOrder,
@@ -148,7 +150,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
               {products.length}
             </div>
             <div className="mt-2 text-xs text-neutral-500 flex items-center gap-2">
-              <span>Across 4 categories</span>
+              <span>Across {categories.length} categories</span>
             </div>
           </div>
         </div>
@@ -161,7 +163,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#171923]">
-                Inventory by Category (5 Main Lines)
+                Inventory by Category
               </h3>
               <p className="text-xs text-neutral-500">Products live on the storefront</p>
             </div>
@@ -173,46 +175,19 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
-              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Packs</span>
-              <span className="text-xl font-semibold text-[#171923] mt-1 block">
-                {categoryCounts.packs} Items
-              </span>
-              <span className="text-[10px] text-blue-600 font-medium">Booster boxes &amp; tins</span>
-            </div>
-
-            <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
-              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Match Attax Cards</span>
-              <span className="text-xl font-semibold text-[#171923] mt-1 block">
-                {categoryCounts.cards} Items
-              </span>
-              <span className="text-[10px] text-amber-600 font-medium">100 Club &amp; foils</span>
-            </div>
-
-            <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
-              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Topps 24/25</span>
-              <span className="text-xl font-semibold text-[#171923] mt-1 block">
-                {categoryCounts.stickers} Items
-              </span>
-              <span className="text-[10px] text-purple-600 font-medium">Vinyl die-cuts</span>
-            </div>
-
-            <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
-              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Panini Cards</span>
-              <span className="text-xl font-semibold text-[#171923] mt-1 block">
-                {categoryCounts.panini} Items
-              </span>
-              <span className="text-[10px] text-red-600 font-medium">Authentic collections</span>
-            </div>
-
-            <div className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80">
-              <span className="text-[11px] font-mono uppercase text-neutral-500 block">Posters</span>
-              <span className="text-xl font-semibold text-[#171923] mt-1 block">
-                {categoryCounts.posters} Items
-              </span>
-              <span className="text-[10px] text-emerald-600 font-medium">A5 prints &amp; dots</span>
-            </div>
+          <div className="flex flex-wrap gap-3">
+            {categories.map(cat => {
+              const count = products.filter(p => p.category === cat.id).length;
+              return (
+                <div key={cat.id} className="p-3 rounded-md bg-neutral-50 border border-neutral-200/80 w-[45%] sm:w-36 grow shrink-0">
+                  <span className="text-[11px] font-mono uppercase text-neutral-500 block">{cat.name}</span>
+                  <span className="text-xl font-semibold text-[#171923] mt-1 block">
+                    {count} Items
+                  </span>
+                  <span className="text-[10px] text-neutral-600 font-medium truncate block max-w-full">{cat.badge}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -22,6 +22,7 @@ interface AdminProductsProps {
   onDeleteProduct: (productId: string) => void;
   isAddModalOpen?: boolean;
   onCloseAddModal?: () => void;
+  categories: any[];
 }
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({
@@ -31,6 +32,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
   onDeleteProduct,
   isAddModalOpen = false,
   onCloseAddModal,
+  categories,
 }) => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'packs' | 'cards' | 'panini' | 'stickers' | 'posters'>('all');
@@ -40,7 +42,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
   // Form state for creating/editing product
   const initialFormData = {
     name: '',
-    category: 'cards' as 'packs' | 'cards' | 'panini' | 'stickers' | 'posters',
+    category: categories[0]?.id || 'cards',
     price: 199,
     originalPrice: 249,
     stock: 10,
@@ -412,17 +414,18 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 uppercase mb-1">
-                      Store Category (4 Lines) *
+                      Store Category *
                     </label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                       className="w-full px-3 py-2 text-xs border border-neutral-300 rounded focus:border-[#245bff] focus:outline-none bg-white"
                     >
-                      <option value="packs">Packs (Booster Packs &amp; Boxes)</option>
-                      <option value="cards">Match Attax Cards (Singles &amp; Foils)</option>
-                      <option value="stickers">Topps 24/25 (Waterproof Vinyl)</option>
-                      <option value="posters">Posters (Football A5 Wall Prints)</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.badge})
+                        </option>
+                      ))}
                     </select>
                   </div>
 

@@ -4,7 +4,7 @@ import { Session } from '@supabase/supabase-js';
 
 interface MobileBottomNavProps {
   session: Session | null;
-  activeTab: 'home' | 'catalog' | 'contact' | 'account';
+  activeTab: string;
   cartCount: number;
   onNavigateHome: () => void;
   onNavigateCatalog: () => void;

@@ -239,6 +239,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <AdminOverview
               products={products}
               orders={orders}
+              categories={categories}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenAddProduct={() => {
                 setActiveTab('products');
@@ -254,6 +255,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'products' && (
             <AdminProducts
               products={products}
+              categories={categories}
               onAddProduct={onAddProduct}
               onUpdateProduct={onUpdateProduct}
               onDeleteProduct={onDeleteProduct}

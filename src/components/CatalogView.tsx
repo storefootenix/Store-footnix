@@ -9,6 +9,7 @@ interface CatalogViewProps {
   onQuickView: (product: Product) => void;
   onAddToCart: (product: Product) => void;
   addedIds?: Set<string>;
+  categories?: any[];
 }
 
 export const CatalogView: React.FC<CatalogViewProps> = ({
@@ -17,16 +18,14 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   onQuickView,
   onAddToCart,
   addedIds = new Set(),
+  categories = [],
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured');
 
-  const categories = [
-    { id: 'all', label: 'All Collectibles' },
-    { id: 'packs', label: 'Packs' },
-    { id: 'cards', label: 'Match Attax Cards' },
-    { id: 'stickers', label: 'Topps 24/25' },
-    { id: 'posters', label: 'Posters' },
+  const displayCategories = [
+    { id: 'all', name: 'All Collectibles' },
+    ...categories,
   ];
 
   const filteredAndSorted = useMemo(() => {
@@ -84,7 +83,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
 
       {/* Sticky Category Filter Pills on Mobile */}
       <div className="sticky top-14 sm:top-18 z-20 bg-white/95 backdrop-blur-md py-2.5 mb-5 sm:mb-8 -mx-3.5 px-3.5 sm:mx-0 sm:px-0 border-b border-neutral-100 sm:border-0 flex items-center gap-2 overflow-x-auto scrollbar-none">
-        {categories.map((cat) => (
+        {displayCategories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
@@ -94,7 +93,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                 : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
             }`}
           >
-            {cat.label}
+            {cat.name}
           </button>
         ))}
       </div>

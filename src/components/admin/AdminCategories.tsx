@@ -42,19 +42,43 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif-store font-semibold text-[#171923]">
-            Category Settings (5 Main Lines)
+            Category Settings
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">
-            Configure the 5 active categories shown in the "Shop by Category" storefront section.
+            Manage the active categories shown in the "Shop by Category" storefront section.
           </p>
         </div>
 
-        {savedSuccess && (
-          <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold flex items-center gap-1.5 animate-fade-in">
-            <Check className="w-4 h-4" />
-            <span>Category updated!</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {savedSuccess && (
+            <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold flex items-center gap-1.5 animate-fade-in">
+              <Check className="w-4 h-4" />
+              <span>Categories updated!</span>
+            </div>
+          )}
+          <button
+            onClick={() => {
+              const id = prompt('Enter a short unique ID for the new category (e.g., "jerseys"):');
+              if (id) {
+                if (categories.find(c => c.id === id)) return alert('Category ID already exists!');
+                const newCat = {
+                  id,
+                  name: 'New Category',
+                  subtitle: 'Short description',
+                  badge: 'NEW',
+                  badgeColor: 'bg-neutral-600 text-white',
+                  thumbUrl: ''
+                };
+                onUpdateCategories([...categories, newCat]);
+                handleStartEdit(newCat);
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#245bff] hover:bg-[#1a47d6] text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>Add Category</span>
+          </button>
+        </div>
       </div>
 
       {/* Grid of the 5 Categories */}
